@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -15,7 +16,12 @@ async function bootstrap() {
 
   if (env.NODE_ENV === 'production') app.set('trust proxy', 1);
   app.useBodyParser('json', { limit: '100kb' });
-  app.use(requestId, helmet(), cookieParser());
+  // cPanel (Passenger) monte l'API sur /api et peut retirer ce préfixe : on le rétablit pour que les routes restent identiques.
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    if (!req.url.startsWith('/api/') && req.url !== '/api') req.url = '/api' + (req.url.startsWith('/') ? '' : '/') + req.url;
+    next();
+  });
+  app.use(requestId, helmet({ crossOriginResourcePolicy: { policy: 'same-site' } }), cookieParser());
   app.enableCors({ origin: env.FRONTEND_URL, credentials: true });
   // Images envoyées depuis l'admin (noms aléatoires, jamais réécrits : cache long).
   app.useStaticAssets(app.get(UploadsService).root, { prefix: UPLOADS_URL + '/', maxAge: '30d', immutable: true, index: false, dotfiles: 'deny' });

@@ -49,8 +49,8 @@ export class AdminOrdersController {
     if (q.status) where.status = q.status;
     if (q.paymentStatus) where.paymentStatus = q.paymentStatus;
     if (q.q) where.OR = [
-      { number: { contains: q.q, mode: 'insensitive' } }, { user: { email: { contains: q.q, mode: 'insensitive' } } },
-      { user: { lastName: { contains: q.q, mode: 'insensitive' } } },
+      { number: { contains: q.q } }, { user: { email: { contains: q.q } } },
+      { user: { lastName: { contains: q.q } } },
     ];
     const [rows, total, counts] = await Promise.all([
       this.prisma.order.findMany({ where, include: orderInclude, orderBy: { placedAt: 'desc' }, ...skipTake(q) }),

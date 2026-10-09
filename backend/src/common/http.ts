@@ -53,13 +53,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const body = err.getResponse() as { message?: string | string[] } | string;
       const msg = typeof body === 'string' ? body : body.message;
       if (Array.isArray(msg)) { code = 'VALIDATION_ERROR'; message = 'Données invalides'; details = msg; } else if (msg) message = msg;
+    } else if ((err instanceof Prisma.PrismaClientUnknownRequestError || err instanceof Prisma.PrismaClientKnownRequestError) && /CONSTRAINT `\w+` failed/i.test(err.message)) {
+      // MariaDB : « CONSTRAINT `products_sale_lt_price` failed for `gmbijoux`.`products` »
+      const constraint = err.message.match(/CONSTRAINT `(\w+)` failed/i)?.[1];
+      statusCode = 400; code = 'VALIDATION_ERROR'; message = (constraint && CHECKS[constraint]) || 'Valeurs incohérentes'; details = constraint;
     } else if (err instanceof Prisma.PrismaClientKnownRequestError) {
       if (err.code === 'P2002') { statusCode = 409; code = 'CONFLICT'; message = 'Cette valeur existe déjà'; details = err.meta?.target; }
       else if (err.code === 'P2025') { statusCode = 404; code = 'NOT_FOUND'; message = 'Ressource introuvable'; }
       else if (err.code === 'P2003') { statusCode = 409; code = 'CONFLICT'; message = 'Ressource encore référencée'; }
-    } else if (err instanceof Prisma.PrismaClientUnknownRequestError && /violates check constraint/.test(err.message)) {
-      const constraint = err.message.match(/check constraint \\?"(\w+)/)?.[1];
-      statusCode = 400; code = 'VALIDATION_ERROR'; message = (constraint && CHECKS[constraint]) || 'Valeurs incohérentes'; details = constraint;
     }
 
     if (statusCode >= 500) this.logger.error(`${req.method} ${req.url} [${req.id}]`, err instanceof Error ? err.stack : String(err));

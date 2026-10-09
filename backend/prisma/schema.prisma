@@ -4,14 +4,14 @@
 // (voir prisma/migrations/0001_init/extra.sql).
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearchPostgres", "postgresqlExtensions"]
+  provider      = "prisma-client-js"
+  // native : machine de développement ; rhel-openssl-* : serveurs mutualisés Namecheap (CloudLinux 8 et 9).
+  binaryTargets = ["native", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pg_trgm, citext]
+  provider = "mysql" // MariaDB 11.4 (hébergement Namecheap)
+  url      = env("DATABASE_URL")
 }
 
 // ───────────────────────── Enums
@@ -132,9 +132,9 @@ enum EmailStatus {
 // ───────────────────────── Utilisateurs & authentification
 
 model User {
-  id              String     @id @default(uuid()) @db.Uuid
-  email           String     @unique @db.Citext
-  passwordHash    String
+  id              String     @id @default(uuid()) @db.Char(36)
+  email           String     @unique @db.VarChar(254) // collation insensible à la casse
+  passwordHash    String     @db.VarChar(255)
   firstName       String     @db.VarChar(80)
   lastName        String     @db.VarChar(80)
   phone           String?    @db.VarChar(30)
@@ -164,15 +164,15 @@ model User {
 
 /// Refresh tokens (rotation + détection de réutilisation). Seul le hash est stocké.
 model Session {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @db.Uuid
-  tokenHash    String    @unique
-  familyId     String    @db.Uuid
+  id           String    @id @default(uuid()) @db.Char(36)
+  userId       String    @db.Char(36)
+  tokenHash    String    @unique @db.Char(64)
+  familyId     String    @db.Char(36)
   userAgent    String?   @db.VarChar(255)
   ip           String?   @db.VarChar(45)
   expiresAt    DateTime
   revokedAt    DateTime?
-  replacedById String?   @db.Uuid
+  replacedById String?   @db.Char(36)
   createdAt    DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -184,10 +184,10 @@ model Session {
 
 /// Jetons à usage unique : vérification d'email, réinitialisation du mot de passe.
 model UserToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @db.Uuid
+  id        String    @id @default(uuid()) @db.Char(36)
+  userId    String    @db.Char(36)
   type      TokenType
-  tokenHash String    @unique
+  tokenHash String    @unique @db.Char(64)
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
@@ -199,8 +199,8 @@ model UserToken {
 }
 
 model Address {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @db.Uuid
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
   label      String?  @db.VarChar(40)
   firstName  String   @db.VarChar(80)
   lastName   String   @db.VarChar(80)
@@ -223,11 +223,11 @@ model Address {
 // ───────────────────────── Catalogue
 
 model Brand {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Char(36)
   name        String   @unique @db.VarChar(100)
   slug        String   @unique @db.VarChar(120)
-  description String?
-  logoUrl     String?
+  description String?  @db.Text
+  logoUrl     String?  @db.VarChar(500)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -240,12 +240,12 @@ model Brand {
 
 /// Catégories hiérarchiques : parentId = null → catégorie, sinon sous-catégorie.
 model Category {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Char(36)
   name        String   @db.VarChar(100)
   slug        String   @unique @db.VarChar(120)
-  description String?
-  parentId    String?  @db.Uuid
-  imageUrl    String?
+  description String?  @db.Text
+  parentId    String?  @db.Char(36)
+  imageUrl    String?  @db.VarChar(500)
   position    Int      @default(0)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -261,12 +261,12 @@ model Category {
 }
 
 model Collection {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Char(36)
   name        String   @db.VarChar(100)
   slug        String   @unique @db.VarChar(120)
-  description String?
-  brandId     String?  @db.Uuid
-  coverUrl    String?
+  description String?  @db.Text
+  brandId     String?  @db.Char(36)
+  coverUrl    String?  @db.VarChar(500)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -280,11 +280,11 @@ model Collection {
 }
 
 model Product {
-  id                String        @id @default(uuid()) @db.Uuid
+  id                String        @id @default(uuid()) @db.Char(36)
   name              String        @db.VarChar(160)
   slug              String        @unique @db.VarChar(180)
   shortDescription  String?       @db.VarChar(300)
-  description       String
+  description       String        @db.Text
   reference         String        @db.VarChar(60)
   sku               String        @unique @db.VarChar(60)
   currency          String        @default("MAD") @db.Char(3)
@@ -298,9 +298,9 @@ model Product {
   isFeatured        Boolean       @default(false)
   gender            Gender        @default(UNISEX)
 
-  brandId      String  @db.Uuid
-  categoryId   String  @db.Uuid
-  collectionId String? @db.Uuid
+  brandId      String  @db.Char(36)
+  categoryId   String  @db.Char(36)
+  collectionId String? @db.Char(36)
 
   // Caractéristiques techniques (colonnes dédiées = filtrables et indexables)
   movementType      MovementType
@@ -327,9 +327,6 @@ model Product {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  /// Colonne générée (full-text français), créée en SQL brut dans la migration initiale.
-  searchVector Unsupported("tsvector")? @map("search_vector")
-
   brand      Brand       @relation(fields: [brandId], references: [id], onDelete: Restrict)
   category   Category    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   collection Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
@@ -353,18 +350,17 @@ model Product {
   @@index([movementType])
   @@index([color])
   @@index([stock])
-  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_name_trgm")
-  @@index([searchVector], type: Gin, map: "products_search_idx")
+  @@fulltext([name, description], map: "products_fulltext")
   @@map("products")
 }
 
 /// Les fichiers vivent chez Cloudinary / S3 ; la base ne garde que les métadonnées.
 model ProductImage {
-  id         String          @id @default(uuid()) @db.Uuid
-  productId  String          @db.Uuid
+  id         String          @id @default(uuid()) @db.Char(36)
+  productId  String          @db.Char(36)
   provider   StorageProvider
   storageKey String          @db.VarChar(255) // public_id Cloudinary ou clé S3
-  url        String
+  url        String          @db.VarChar(500)
   alt        String?         @db.VarChar(160)
   width      Int?
   height     Int?
@@ -380,8 +376,8 @@ model ProductImage {
 
 /// Option configurable d'un produit (Couleur, Bracelet, Taille…). Ordre d'affichage par `position`.
 model ProductOption {
-  id        String   @id @default(uuid()) @db.Uuid
-  productId String   @db.Uuid
+  id        String   @id @default(uuid()) @db.Char(36)
+  productId String   @db.Char(36)
   name      String   @db.VarChar(40)
   position  Int      @default(0)
   createdAt DateTime @default(now())
@@ -396,8 +392,8 @@ model ProductOption {
 
 /// Valeur d'une option. `colorHex` affiche une pastille (options de type couleur).
 model ProductOptionValue {
-  id       String  @id @default(uuid()) @db.Uuid
-  optionId String  @db.Uuid
+  id       String  @id @default(uuid()) @db.Char(36)
+  optionId String  @db.Char(36)
   label    String  @db.VarChar(60)
   colorHex String? @db.VarChar(7)
   position Int     @default(0)
@@ -414,14 +410,14 @@ model ProductOptionValue {
 /// Quand un produit a des déclinaisons, `products.stock` vaut la somme de leurs stocks (maintenue par l'API).
 /// `priceCents` / `salePriceCents` nuls : le prix du produit s'applique.
 model ProductVariant {
-  id             String   @id @default(uuid()) @db.Uuid
-  productId      String   @db.Uuid
+  id             String   @id @default(uuid()) @db.Char(36)
+  productId      String   @db.Char(36)
   sku            String   @unique @db.VarChar(60)
   priceCents     Int?
   salePriceCents Int?
   stock          Int      @default(0)
   isActive       Boolean  @default(true)
-  imageUrl       String?
+  imageUrl       String?  @db.VarChar(500)
   position       Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -437,8 +433,8 @@ model ProductVariant {
 }
 
 model ProductVariantValue {
-  variantId     String @db.Uuid
-  optionValueId String @db.Uuid
+  variantId     String @db.Char(36)
+  optionValueId String @db.Char(36)
 
   variant     ProductVariant     @relation(fields: [variantId], references: [id], onDelete: Cascade)
   optionValue ProductOptionValue @relation(fields: [optionValueId], references: [id], onDelete: Cascade)
@@ -450,13 +446,13 @@ model ProductVariantValue {
 
 /// Journal de stock : chaque variation est tracée (audit, réconciliation).
 model StockMovement {
-  id        String      @id @default(uuid()) @db.Uuid
-  productId String      @db.Uuid
-  variantId String?     @db.Uuid
+  id        String      @id @default(uuid()) @db.Char(36)
+  productId String      @db.Char(36)
+  variantId String?     @db.Char(36)
   delta     Int
   reason    StockReason
-  orderId   String?     @db.Uuid
-  actorId   String?     @db.Uuid
+  orderId   String?     @db.Char(36)
+  actorId   String?     @db.Char(36)
   note      String?     @db.VarChar(255)
   createdAt DateTime    @default(now())
 
@@ -473,10 +469,10 @@ model StockMovement {
 /// Panier utilisateur (userId) ou invité (guestToken). Les prix ne sont jamais stockés ici :
 /// ils sont recalculés côté serveur à chaque lecture.
 model Cart {
-  id         String    @id @default(uuid()) @db.Uuid
-  userId     String?   @unique @db.Uuid
+  id         String    @id @default(uuid()) @db.Char(36)
+  userId     String?   @unique @db.Char(36)
   guestToken String?   @unique @db.VarChar(64)
-  couponId   String?   @db.Uuid
+  couponId   String?   @db.Char(36)
   expiresAt  DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -489,10 +485,10 @@ model Cart {
 }
 
 model CartItem {
-  id        String   @id @default(uuid()) @db.Uuid
-  cartId    String   @db.Uuid
-  productId String   @db.Uuid
-  variantId String?  @db.Uuid
+  id        String   @id @default(uuid()) @db.Char(36)
+  cartId    String   @db.Char(36)
+  productId String   @db.Char(36)
+  variantId String?  @db.Char(36)
   quantity  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -501,14 +497,14 @@ model CartItem {
   product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
-  /// NULLS NOT DISTINCT ajouté en SQL : une seule ligne par produit sans déclinaison.
+  /// Unicité d'une ligne sans déclinaison (variantId NULL) assurée par l'API.
   @@unique([cartId, productId, variantId])
   @@map("cart_items")
 }
 
 model Wishlist {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @unique @db.Uuid
+  id        String   @id @default(uuid()) @db.Char(36)
+  userId    String   @unique @db.Char(36)
   createdAt DateTime @default(now())
 
   user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -518,9 +514,9 @@ model Wishlist {
 }
 
 model WishlistItem {
-  id         String   @id @default(uuid()) @db.Uuid
-  wishlistId String   @db.Uuid
-  productId  String   @db.Uuid
+  id         String   @id @default(uuid()) @db.Char(36)
+  wishlistId String   @db.Char(36)
+  productId  String   @db.Char(36)
   createdAt  DateTime @default(now())
 
   wishlist Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
@@ -533,9 +529,9 @@ model WishlistItem {
 // ───────────────────────── Commandes
 
 model Order {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String        @id @default(uuid()) @db.Char(36)
   number        String        @unique @db.VarChar(20) // GM-2026-000123
-  userId        String        @db.Uuid
+  userId        String        @db.Char(36)
   status        OrderStatus   @default(PENDING)
   paymentStatus PaymentStatus @default(PENDING)
   paymentMethod PaymentMethod
@@ -547,14 +543,14 @@ model Order {
   taxCents      Int @default(0) // TVA incluse, ventilée pour la facture
   totalCents    Int
 
-  couponId   String? @db.Uuid
+  couponId   String? @db.Char(36)
   couponCode String? @db.VarChar(40) // snapshot
 
   // Snapshots : l'adresse de la commande ne change pas si le client modifie son carnet.
   shippingAddress Json
   billingAddress  Json?
 
-  shippingMethodId   String? @db.Uuid
+  shippingMethodId   String? @db.Char(36)
   shippingMethodName String  @db.VarChar(80)
   customerNote       String? @db.VarChar(500)
   idempotencyKey     String? @unique @db.VarChar(64)
@@ -584,14 +580,14 @@ model Order {
 
 /// Prix et libellés figés au moment de l'achat.
 model OrderItem {
-  id             String  @id @default(uuid()) @db.Uuid
-  orderId        String  @db.Uuid
-  productId      String? @db.Uuid
-  variantId      String? @db.Uuid
+  id             String  @id @default(uuid()) @db.Char(36)
+  orderId        String  @db.Char(36)
+  productId      String? @db.Char(36)
+  variantId      String? @db.Char(36)
   productName    String  @db.VarChar(160)
   variantLabel   String? @db.VarChar(160) // ex. « Bleu nuit · Cuir »
   sku            String  @db.VarChar(60)
-  imageUrl       String?
+  imageUrl       String? @db.VarChar(500)
   unitPriceCents Int
   quantity       Int
   totalCents     Int
@@ -607,12 +603,12 @@ model OrderItem {
 }
 
 model OrderStatusHistory {
-  id        String       @id @default(uuid()) @db.Uuid
-  orderId   String       @db.Uuid
+  id        String       @id @default(uuid()) @db.Char(36)
+  orderId   String       @db.Char(36)
   from      OrderStatus?
   to        OrderStatus
   note      String?      @db.VarChar(255)
-  actorId   String?      @db.Uuid
+  actorId   String?      @db.Char(36)
   createdAt DateTime     @default(now())
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
@@ -625,8 +621,8 @@ model OrderStatusHistory {
 
 /// Aucune donnée de carte n'est stockée : seulement les identifiants Stripe.
 model Payment {
-  id                String          @id @default(uuid()) @db.Uuid
-  orderId           String          @db.Uuid
+  id                String          @id @default(uuid()) @db.Char(36)
+  orderId           String          @db.Char(36)
   provider          PaymentProvider
   providerPaymentId String?         @unique @db.VarChar(120) // pi_xxx
   amountCents       Int
@@ -647,13 +643,13 @@ model Payment {
 }
 
 model Refund {
-  id               String       @id @default(uuid()) @db.Uuid
-  paymentId        String       @db.Uuid
+  id               String       @id @default(uuid()) @db.Char(36)
+  paymentId        String       @db.Char(36)
   providerRefundId String?      @unique @db.VarChar(120)
   amountCents      Int
   reason           String?      @db.VarChar(255)
   status           RefundStatus @default(PENDING)
-  actorId          String?      @db.Uuid
+  actorId          String?      @db.Char(36)
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
@@ -665,13 +661,13 @@ model Refund {
 
 /// Idempotence des webhooks : un événement n'est traité qu'une fois.
 model WebhookEvent {
-  id          String          @id @default(uuid()) @db.Uuid
+  id          String          @id @default(uuid()) @db.Char(36)
   provider    PaymentProvider
   eventId     String          @unique @db.VarChar(120)
   type        String          @db.VarChar(80)
   payload     Json
   processedAt DateTime?
-  error       String?
+  error       String?         @db.Text
   createdAt   DateTime        @default(now())
 
   @@map("webhook_events")
@@ -680,9 +676,9 @@ model WebhookEvent {
 // ───────────────────────── Livraison (règles éditables depuis l'admin)
 
 model ShippingZone {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid()) @db.Char(36)
   name      String   @db.VarChar(80)
-  countries String[] // ISO alpha-2
+  countries Json // tableau de codes ISO alpha-2, ex. ["MA"]
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -693,8 +689,8 @@ model ShippingZone {
 }
 
 model ShippingMethod {
-  id             String   @id @default(uuid()) @db.Uuid
-  zoneId         String   @db.Uuid
+  id             String   @id @default(uuid()) @db.Char(36)
+  zoneId         String   @db.Char(36)
   name           String   @db.VarChar(80)
   carrier        String   @db.VarChar(60)
   priceCents     Int
@@ -716,11 +712,11 @@ model ShippingMethod {
 }
 
 model Shipment {
-  id             String         @id @default(uuid()) @db.Uuid
-  orderId        String         @db.Uuid
+  id             String         @id @default(uuid()) @db.Char(36)
+  orderId        String         @db.Char(36)
   carrier        String         @db.VarChar(60)
   trackingNumber String?        @db.VarChar(80)
-  trackingUrl    String?
+  trackingUrl    String?        @db.VarChar(500)
   status         ShipmentStatus @default(PENDING)
   shippedAt      DateTime?
   deliveredAt    DateTime?
@@ -737,8 +733,8 @@ model Shipment {
 // ───────────────────────── Coupons & promotions
 
 model Coupon {
-  id               String       @id @default(uuid()) @db.Uuid
-  code             String       @unique @db.Citext
+  id               String       @id @default(uuid()) @db.Char(36)
+  code             String       @unique @db.VarChar(40) // collation insensible à la casse
   type             DiscountType
   value            Int // PERCENTAGE : 1–100 ; FIXED_AMOUNT : centimes
   maxDiscountCents Int?
@@ -761,10 +757,10 @@ model Coupon {
 }
 
 model CouponRedemption {
-  id          String   @id @default(uuid()) @db.Uuid
-  couponId    String   @db.Uuid
-  userId      String   @db.Uuid
-  orderId     String   @unique @db.Uuid
+  id          String   @id @default(uuid()) @db.Char(36)
+  couponId    String   @db.Char(36)
+  userId      String   @db.Char(36)
+  orderId     String   @unique @db.Char(36)
   amountCents Int
   createdAt   DateTime @default(now())
 
@@ -778,7 +774,7 @@ model CouponRedemption {
 
 /// Promotion automatique (sans code) ciblant produits, catégories ou collections.
 model Promotion {
-  id        String       @id @default(uuid()) @db.Uuid
+  id        String       @id @default(uuid()) @db.Char(36)
   name      String       @db.VarChar(100)
   type      DiscountType
   value     Int
@@ -796,11 +792,11 @@ model Promotion {
 }
 
 model PromotionTarget {
-  id           String  @id @default(uuid()) @db.Uuid
-  promotionId  String  @db.Uuid
-  productId    String? @db.Uuid
-  categoryId   String? @db.Uuid
-  collectionId String? @db.Uuid
+  id           String  @id @default(uuid()) @db.Char(36)
+  promotionId  String  @db.Char(36)
+  productId    String? @db.Char(36)
+  categoryId   String? @db.Char(36)
+  collectionId String? @db.Char(36)
 
   promotion  Promotion   @relation(fields: [promotionId], references: [id], onDelete: Cascade)
   product    Product?    @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -816,15 +812,15 @@ model PromotionTarget {
 // ───────────────────────── Avis
 
 model Review {
-  id            String       @id @default(uuid()) @db.Uuid
-  productId     String       @db.Uuid
-  userId        String       @db.Uuid
-  orderId       String       @db.Uuid // preuve d'achat
+  id            String       @id @default(uuid()) @db.Char(36)
+  productId     String       @db.Char(36)
+  userId        String       @db.Char(36)
+  orderId       String       @db.Char(36) // preuve d'achat
   rating        Int // 1–5 (CHECK SQL)
   title         String?      @db.VarChar(120)
   comment       String       @db.VarChar(2000)
   status        ReviewStatus @default(PENDING)
-  moderatedById String?      @db.Uuid
+  moderatedById String?      @db.Char(36)
   moderatedAt   DateTime?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -843,14 +839,14 @@ model Review {
 
 /// Outbox : les emails sont écrits ici dans la transaction métier, puis envoyés par un worker.
 model EmailOutbox {
-  id                String      @id @default(uuid()) @db.Uuid
+  id                String      @id @default(uuid()) @db.Char(36)
   to                String      @db.VarChar(254)
   template          String      @db.VarChar(60)
   payload           Json
   status            EmailStatus @default(QUEUED)
   attempts          Int         @default(0)
   providerMessageId String?     @db.VarChar(120)
-  error             String?
+  error             String?     @db.Text
   sendAfter         DateTime    @default(now())
   sentAt            DateTime?
   createdAt         DateTime    @default(now())
@@ -860,8 +856,8 @@ model EmailOutbox {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid()) @db.Uuid
-  actorId   String?  @db.Uuid
+  id        String   @id @default(uuid()) @db.Char(36)
+  actorId   String?  @db.Char(36)
   action    String   @db.VarChar(60) // product.update, order.refund…
   entity    String   @db.VarChar(40)
   entityId  String?  @db.VarChar(60)

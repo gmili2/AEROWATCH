@@ -1,13 +1,15 @@
 # GMBIJOUX — API
 
-NestJS 11 + Prisma 6 + PostgreSQL 16. La conception complète (modèle, endpoints, sécurité) est dans [ARCHITECTURE.md](ARCHITECTURE.md).
+> Mise en ligne sur Namecheap (cPanel) avec GitHub Actions : voir [../DEPLOY.md](../DEPLOY.md). Premier démarrage en production : `npm run bootstrap` (jamais `db:seed`).
+
+NestJS 11 + Prisma 6 + **MariaDB 11.4** (la version de l'hébergement Namecheap Stellar). La conception complète (modèle, endpoints, sécurité) est dans [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Démarrer en local
 
 ```bash
 cd backend
 cp .env.example .env          # puis renseigner JWT_SECRET et ADMIN_PASSWORD
-docker compose up -d          # PostgreSQL sur le port 5434
+docker compose up -d          # MariaDB 11.4 sur le port 3307 (ou sans Docker, voir ci-dessous)
 npm install
 npm run db:deploy             # applique les migrations
 npm run db:seed               # ⚠️ vide la base puis la remplit avec les données de démo
@@ -16,6 +18,17 @@ npm run dev                   # API sur http://localhost:3000/api/v1
 
 Puis, à la racine du site : `npm run dev`. Vite redirige `/api` vers le port 3000 (variable `API_URL` pour changer la cible).
 L'administration est sur `/admin` ; le compte est `ADMIN_EMAIL` / `ADMIN_PASSWORD` du `.env`, créé par le seed.
+
+**Sans Docker (Homebrew)** : `brew install mariadb@11.4`, puis une instance dédiée sur le port 3307 :
+
+```bash
+D=~/.local/share/gmbijoux-mariadb; B=$(brew --prefix mariadb@11.4)
+mariadb-install-db --datadir=$D/data --auth-root-authentication-method=socket   # une seule fois
+$B/bin/mariadbd --datadir=$D/data --port=3307 --bind-address=127.0.0.1 --socket=$D/mysql.sock &
+# une seule fois : base et utilisateur
+$B/bin/mariadb --socket=$D/mysql.sock -e "CREATE DATABASE gmbijoux CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE USER 'gmbijoux'@'127.0.0.1' IDENTIFIED BY 'gmbijoux'; GRANT ALL ON gmbijoux.* TO 'gmbijoux'@'127.0.0.1';"
+```
 
 ## Ce qui est en place
 
@@ -27,6 +40,7 @@ L'administration est sur `/admin` ; le compte est `ADMIN_EMAIL` / `ADMIN_PASSWOR
 | Catalogue (public) | `GET /products` (filtres `q`, `category`, `collection`, `brand`, `tag`, `color`, `movement`, `gender`, `minPrice`, `maxPrice`, `inStock`, `onSale`, `isNew`, `featured`, `sort`, `page`, `limit`) · `GET /products/:slug` · `GET /categories` · `GET /collections` · `GET /brands` |
 | Admin produits | `GET/POST /admin/products` · `GET/PATCH /admin/products/:id` · `PATCH …/:id/status` · `POST …/:id/stock` (avec `variantId` pour un produit à déclinaisons) · `PUT …/:id/variants` (options + déclinaisons) |
 | Admin commandes | `GET /admin/orders` · `GET /admin/orders/:id` · `PATCH …/:id/status` · `POST …/:id/shipments` · `POST …/:id/payment-received` (espèces encaissées ou virement reçu) · `POST /admin/payments/:id/refund` |
+| Production | `npm run bootstrap [-- --with-catalog]` : crée l'admin, les catégories et la livraison (et les montres de départ si le catalogue est vide), sans rien écraser |
 | Admin catégories | `GET/POST /admin/categories` · `PATCH/DELETE /admin/categories/:id` · `POST/DELETE …/:id/image` |
 | Admin photos produit | `POST /admin/products/:id/images` · `PATCH …/images/:imageId/primary` · `DELETE …/images/:imageId` |
 | Admin promotions | `GET/POST /admin/coupons` · `PATCH/DELETE /admin/coupons/:id` · idem pour `/admin/promotions` |
@@ -47,7 +61,7 @@ Règles métier côté serveur : machine à états des commandes (transitions in
 
 ## Images
 
-Envoyées depuis l'admin (JPG, PNG ou WebP, 5 Mo max, format vérifié sur le contenu du fichier) et enregistrées dans `UPLOAD_DIR` (`uploads/` par défaut), servies sous `/uploads`. Ce dossier doit être sauvegardé et persistant en production ; passer à Cloudinary/S3 dès qu'il y a plusieurs serveurs.
+Envoyées depuis l'admin (JPG, PNG ou WebP, 5 Mo max, format vérifié sur le contenu du fichier) et enregistrées dans `UPLOAD_DIR` (`uploads/` par défaut), servies sous `/api/uploads`. Ce dossier doit être sauvegardé et persistant en production ; passer à Cloudinary/S3 dès qu'il y a plusieurs serveurs.
 
 ## Options et déclinaisons
 
@@ -62,8 +76,12 @@ En public, `GET /products/:slug` renvoie `options`, `variants` (prix final, disp
 - **Redis** : la limitation de débit est en mémoire (suffisant pour une seule instance).
 - **Cloudinary/S3** : les images sont stockées sur le disque du serveur (voir « Images »). Les photos de départ des montres de marque sont dans `public/` du site.
 
-## Notes Prisma
+## Notes base de données (MariaDB)
 
-- La migration `product_variants` a été générée avec `prisma migrate diff` (le mode interactif n'est pas disponible ici) ; l'index unique du panier y utilise `NULLS NOT DISTINCT`.
-- La colonne `products.search_vector` (recherche plein texte) et les contraintes `CHECK` sont créées en SQL brut dans la migration initiale.
-- `prisma migrate dev` détecte à tort une dérive sur `search_vector` (colonne générée). Pour une nouvelle migration : `npx prisma migrate dev --create-only`, **supprimer la ligne `ALTER COLUMN "search_vector" DROP DEFAULT`** du fichier généré, puis `npm run db:deploy`.
+- Une seule migration initiale (`prisma/migrations/…_init`), complétée à la main par les contraintes `CHECK` (prix promo < prix, stock ≥ 0, totaux cohérents…). MariaDB les applique ; l'API traduit leurs erreurs en messages lisibles.
+- Collation `utf8mb4_unicode_ci` : e-mails, codes promo et recherches sont insensibles aux majuscules sans traitement particulier. **Créer la base en `utf8mb4_unicode_ci` sur l'hébergement.**
+- La recherche du catalogue utilise `LIKE` ; un index `FULLTEXT` (nom, description) est prêt pour une recherche plus fine.
+- Règles assurées par l'API (pas d'index partiel sous MariaDB) : une seule photo principale par montre, une seule ligne de panier par montre sans déclinaison.
+- Les statistiques « ventes par jour » sont regroupées en heure de Casablanca côté API : les fuseaux nommés ne sont pas toujours chargés dans MariaDB en mutualisé.
+- Le client Prisma embarque les moteurs `rhel-openssl-1.1.x` et `rhel-openssl-3.0.x` (serveurs CloudLinux de Namecheap).
+- Nouvelle migration : `npx prisma migrate dev --create-only` (nécessite le droit de créer une base temporaire) ou `npx prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script`, puis `npm run db:deploy`.

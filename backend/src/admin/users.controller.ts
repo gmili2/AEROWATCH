@@ -20,7 +20,7 @@ export class AdminUsersController {
     const where: Prisma.UserWhereInput = { deletedAt: null };
     if (q.role) where.role = q.role;
     if (q.q) where.OR = [
-      { email: { contains: q.q, mode: 'insensitive' } }, { lastName: { contains: q.q, mode: 'insensitive' } }, { firstName: { contains: q.q, mode: 'insensitive' } },
+      { email: { contains: q.q } }, { lastName: { contains: q.q } }, { firstName: { contains: q.q } },
     ];
     const [rows, total] = await Promise.all([
       this.prisma.user.findMany({
@@ -33,11 +33,11 @@ export class AdminUsersController {
     const stats = await this.prisma.order.groupBy({
       by: ['userId'], where: { userId: { in: rows.map((u) => u.id) } }, _count: { _all: true },
     });
-    const spent = await this.prisma.$queryRaw<{ userId: string; spent: bigint }[]>`
-      SELECT o."userId", COALESCE(SUM(p."amountCents" - p."refundedCents"), 0)::bigint AS spent
-      FROM orders o JOIN payments p ON p."orderId" = o.id
-      WHERE p.status IN ('PAID', 'PARTIALLY_REFUNDED') AND o."userId" = ANY(${rows.map((u) => u.id)}::uuid[])
-      GROUP BY o."userId"`;
+    const spent = rows.length ? await this.prisma.$queryRaw<{ userId: string; spent: bigint | number | string }[]>`
+      SELECT o.userId, COALESCE(SUM(p.amountCents - p.refundedCents), 0) AS spent
+      FROM orders o JOIN payments p ON p.orderId = o.id
+      WHERE p.status IN ('PAID', 'PARTIALLY_REFUNDED') AND o.userId IN (${Prisma.join(rows.map((u) => u.id))})
+      GROUP BY o.userId` : [];
     const count = new Map(stats.map((s) => [s.userId, s._count._all]));
     const total$ = new Map(spent.map((s) => [s.userId, Number(s.spent)]));
     return paged(rows.map((u) => ({ ...u, ordersCount: count.get(u.id) ?? 0, totalSpentCents: total$.get(u.id) ?? 0 })), total, q);

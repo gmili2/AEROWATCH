@@ -41,9 +41,9 @@ export class AdminReviewsController {
       if (delta) {
         // Verrou sur la ligne produit : deux modérations simultanées ne faussent pas la moyenne.
         const [p] = await tx.$queryRaw<{ ratingAvg: Prisma.Decimal; ratingCount: number }[]>`
-          SELECT "ratingAvg", "ratingCount" FROM products WHERE id = ${before.productId}::uuid FOR UPDATE`;
-        const count = p.ratingCount + delta;
-        const avg = count > 0 ? (Number(p.ratingAvg) * p.ratingCount + delta * before.rating) / count : 0;
+          SELECT ratingAvg, ratingCount FROM products WHERE id = ${before.productId} FOR UPDATE`;
+        const count = Number(p.ratingCount) + delta;
+        const avg = count > 0 ? (Number(p.ratingAvg) * Number(p.ratingCount) + delta * before.rating) / count : 0;
         await tx.product.update({ where: { id: before.productId }, data: { ratingCount: count, ratingAvg: Math.min(5, Math.max(0, Math.round(avg * 10) / 10)) } });
       }
       await this.audit.log(me.id, 'review.moderate', 'review', id, { from: before.status, to: status }, tx);

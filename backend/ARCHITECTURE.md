@@ -1,5 +1,7 @@
 # GMBIJOUX — Backend e-commerce · Étape 1 : conception
 
+> **Mise à jour (octobre 2026)** : pour l'hébergement Namecheap Stellar, la base est passée de PostgreSQL 16 à **MariaDB 11.4**. Les mentions de PostgreSQL ci-dessous (citext, recherche `search_vector`, index partiels) décrivent la conception d'origine ; les adaptations sont détaillées dans `README.md` → « Notes base de données ».
+
 Ce document couvre les 6 premiers points de la méthode : stack, dossiers, schéma, relations, endpoints, authentification/rôles. Le schéma complet est dans `prisma/schema.prisma` (+ `prisma/migrations/0001_init/extra.sql` pour les contraintes CHECK et la recherche).
 
 ---

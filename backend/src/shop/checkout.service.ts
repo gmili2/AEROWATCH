@@ -29,7 +29,7 @@ export class CheckoutService {
   /** Méthodes de livraison actives pour un pays. */
   async shippingMethods(country: string) {
     return this.prisma.shippingMethod.findMany({
-      where: { isActive: true, zone: { isActive: true, countries: { has: country } } },
+      where: { isActive: true, zone: { isActive: true, countries: { path: '$', array_contains: [country] } } },
       orderBy: { position: 'asc' },
       select: { id: true, name: true, carrier: true, priceCents: true, freeAboveCents: true, minDays: true, maxDays: true, codAllowed: true, codFeeCents: true },
     });
@@ -118,8 +118,8 @@ export class CheckoutService {
     });
     if (lock && products.length) {
       const ids = products.map((p) => p.id);
-      await db.$queryRaw`SELECT id FROM products WHERE id = ANY(${ids}::uuid[]) FOR UPDATE`;
-      await db.$queryRaw`SELECT id FROM product_variants WHERE "productId" = ANY(${ids}::uuid[]) FOR UPDATE`;
+      await db.$queryRaw`SELECT id FROM products WHERE id IN (${Prisma.join(ids)}) FOR UPDATE`;
+      await db.$queryRaw`SELECT id FROM product_variants WHERE productId IN (${Prisma.join(ids)}) FOR UPDATE`;
     }
     const promos = await this.pricing.activePromotions();
     const problems: { slug: string; variantId: string | null; reason: string; available?: number }[] = [];
@@ -160,7 +160,7 @@ export class CheckoutService {
       if (!c || !c.isActive || (c.startsAt && c.startsAt > now) || (c.expiresAt && c.expiresAt < now)) {
         throw err(HttpStatus.UNPROCESSABLE_ENTITY, 'COUPON_INVALID', 'Ce code promo n’est pas valable');
       }
-      if (lock) await db.$queryRaw`SELECT id FROM coupons WHERE id = ${c.id}::uuid FOR UPDATE`;
+      if (lock) await db.$queryRaw`SELECT id FROM coupons WHERE id = ${c.id} FOR UPDATE`;
       const used = lock ? (await db.coupon.findUniqueOrThrow({ where: { id: c.id } })).usedCount : c.usedCount;
       if (c.maxUses != null && used >= c.maxUses) throw err(HttpStatus.UNPROCESSABLE_ENTITY, 'COUPON_EXHAUSTED', 'Ce code promo a atteint sa limite d’utilisation');
       if (subtotal < c.minOrderCents) {
@@ -178,7 +178,7 @@ export class CheckoutService {
 
     // Livraison.
     const method = await db.shippingMethod.findFirst({
-      where: { ...(dto.shippingMethodId && { id: dto.shippingMethodId }), isActive: true, zone: { isActive: true, countries: { has: dto.country } } },
+      where: { ...(dto.shippingMethodId && { id: dto.shippingMethodId }), isActive: true, zone: { isActive: true, countries: { path: '$', array_contains: [dto.country] } } },
       orderBy: { position: 'asc' },
     });
     if (!method) throw err(HttpStatus.UNPROCESSABLE_ENTITY, 'SHIPPING_UNAVAILABLE', 'Mode de livraison indisponible pour cette adresse');

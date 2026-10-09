@@ -50,17 +50,17 @@ export class CatalogController {
     const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
     const and: Prisma.ProductWhereInput[] = [];
     if (q.q) and.push({ OR: [
-      { name: { contains: q.q, mode: 'insensitive' } }, { description: { contains: q.q, mode: 'insensitive' } },
-      { sku: { contains: q.q, mode: 'insensitive' } }, { collection: { name: { contains: q.q, mode: 'insensitive' } } },
+      { name: { contains: q.q } }, { description: { contains: q.q } },
+      { sku: { contains: q.q } }, { collection: { name: { contains: q.q } } },
     ] });
     if (q.category) where.category = { slug: q.category };
     if (q.collection) where.collection = { slug: q.collection };
     if (q.brand) where.brand = { slug: q.brand };
-    if (q.tag) where.extraSpecs = { path: ['tags'], array_contains: [q.tag] };
+    if (q.tag) where.extraSpecs = { path: '$.tags', array_contains: [q.tag] };
     // Couleur principale du produit ou l'une de ses déclinaisons actives.
     if (q.color) and.push({ OR: [
-      { color: { equals: q.color, mode: 'insensitive' } },
-      { variants: { some: { isActive: true, values: { some: { optionValue: { label: { equals: q.color, mode: 'insensitive' } } } } } } },
+      { color: { equals: q.color } },
+      { variants: { some: { isActive: true, values: { some: { optionValue: { label: { equals: q.color } } } } } } },
     ] });
     if (q.movement) where.movementType = q.movement;
     if (q.gender) where.gender = q.gender;

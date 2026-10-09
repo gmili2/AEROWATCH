@@ -13,8 +13,9 @@ class LoginDto {
 }
 
 const COOKIE = 'refresh_token';
-const cookieOptions = (): CookieOptions => ({
-  httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', path: '/api/v1/auth',
+/** Cookie « Secure » dès que la requête arrive en HTTPS (derrière le proxy de l'hébergeur : voir trust proxy). */
+const cookieOptions = (req: Request): CookieOptions => ({
+  httpOnly: true, secure: req.secure, sameSite: 'strict', path: '/api/v1/auth',
   maxAge: REFRESH_TTL_DAYS * 86_400_000,
 });
 const meta = (req: Request) => ({ userAgent: req.header('user-agent'), ip: req.ip });
@@ -28,7 +29,7 @@ export class AuthController {
   @Post('login') @HttpCode(200)
   async login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const { refreshToken, ...data } = await this.auth.login(dto.email, dto.password, meta(req));
-    res.cookie(COOKIE, refreshToken, cookieOptions());
+    res.cookie(COOKIE, refreshToken, cookieOptions(req));
     return { data };
   }
 
@@ -38,10 +39,10 @@ export class AuthController {
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     try {
       const { refreshToken, ...data } = await this.auth.refresh(req.cookies?.[COOKIE], meta(req));
-      res.cookie(COOKIE, refreshToken, cookieOptions());
+      res.cookie(COOKIE, refreshToken, cookieOptions(req));
       return { data };
     } catch (e) {
-      res.clearCookie(COOKIE, { ...cookieOptions(), maxAge: undefined });
+      res.clearCookie(COOKIE, { ...cookieOptions(req), maxAge: undefined });
       throw e;
     }
   }
@@ -51,7 +52,7 @@ export class AuthController {
   @Post('logout') @HttpCode(204)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     await this.auth.logout(req.cookies?.[COOKIE]);
-    res.clearCookie(COOKIE, { ...cookieOptions(), maxAge: undefined });
+    res.clearCookie(COOKIE, { ...cookieOptions(req), maxAge: undefined });
   }
 
   @Get('me')

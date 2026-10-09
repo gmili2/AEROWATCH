@@ -13,6 +13,7 @@ class DaysQuery { @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(365) d
 class LimitQuery { @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(50) limit = 5; }
 
 const DAY = 86_400_000;
+const DAY_FMT = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Casablanca', year: 'numeric', month: '2-digit', day: '2-digit' });
 const PAID = ['PAID', 'PARTIALLY_REFUNDED'] as const;
 
 @Roles('ADMIN')
@@ -27,10 +28,10 @@ export class AdminStatsController {
     const from = q.from ? new Date(q.from) : new Date(to.getTime() - 30 * DAY);
     const range = { gte: from, lte: to };
     const [[money], orders, toProcess, customers, newCustomers, items] = await Promise.all([
-      this.prisma.$queryRaw<{ revenue: bigint; paidOrders: bigint }[]>`
-        SELECT COALESCE(SUM(p."amountCents" - p."refundedCents"), 0)::bigint AS revenue, COUNT(DISTINCT o.id)::bigint AS "paidOrders"
-        FROM orders o JOIN payments p ON p."orderId" = o.id
-        WHERE p.status IN ('PAID', 'PARTIALLY_REFUNDED') AND o."placedAt" BETWEEN ${from} AND ${to}`,
+      this.prisma.$queryRaw<{ revenue: bigint | number | string; paidOrders: bigint | number }[]>`
+        SELECT COALESCE(SUM(p.amountCents - p.refundedCents), 0) AS revenue, COUNT(DISTINCT o.id) AS paidOrders
+        FROM orders o JOIN payments p ON p.orderId = o.id
+        WHERE p.status IN ('PAID', 'PARTIALLY_REFUNDED') AND o.placedAt BETWEEN ${from} AND ${to}`,
       this.prisma.order.count({ where: { placedAt: range } }),
       this.prisma.order.count({ where: { status: { in: ['PENDING', 'CONFIRMED'] } } }),
       this.prisma.user.count({ where: { role: 'CUSTOMER', deletedAt: null } }),
@@ -47,21 +48,29 @@ export class AdminStatsController {
     };
   }
 
-  /** Une ligne par jour (heure de Casablanca), jours sans vente inclus. */
+  /**
+   * Une ligne par jour (heure de Casablanca), jours sans vente inclus.
+   * Regroupement fait ici : les fuseaux nommés ne sont pas toujours chargés dans MariaDB sur un hébergement mutualisé.
+   */
   @Get('sales-by-day')
   async salesByDay(@Query() q: DaysQuery) {
-    const rows = await this.prisma.$queryRaw<{ day: string; revenue: bigint; orders: bigint }[]>`
-      WITH days AS (
-        SELECT generate_series((now() AT TIME ZONE 'Africa/Casablanca')::date - (${q.days}::int - 1), (now() AT TIME ZONE 'Africa/Casablanca')::date, '1 day')::date AS day
-      )
-      SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
-             COALESCE(SUM(p."amountCents" - p."refundedCents"), 0)::bigint AS revenue,
-             COUNT(DISTINCT o.id)::bigint AS orders
-      FROM days d
-      LEFT JOIN orders o ON (o."placedAt" AT TIME ZONE 'UTC' AT TIME ZONE 'Africa/Casablanca')::date = d.day
-      LEFT JOIN payments p ON p."orderId" = o.id AND p.status IN ('PAID', 'PARTIALLY_REFUNDED')
-      GROUP BY d.day ORDER BY d.day`;
-    return { data: rows.map((r) => ({ day: r.day, revenueCents: Number(r.revenue), orders: Number(r.orders) })) };
+    const dayOf = (d: Date) => DAY_FMT.format(d);
+    const today = dayOf(new Date());
+    const days: string[] = [];
+    for (let i = q.days - 1; i >= 0; i--) days.push(dayOf(new Date(Date.parse(today + 'T12:00:00Z') - i * DAY)));
+    // Marge d'un jour pour couvrir le décalage horaire, puis filtrage exact sur le jour local.
+    const orders = await this.prisma.order.findMany({
+      where: { placedAt: { gte: new Date(Date.parse(days[0] + 'T00:00:00Z') - DAY) } },
+      select: { id: true, placedAt: true, payments: { where: { status: { in: [...PAID] } }, select: { amountCents: true, refundedCents: true } } },
+    });
+    const byDay = new Map(days.map((d) => [d, { revenueCents: 0, orders: 0 }]));
+    for (const o of orders) {
+      const slot = byDay.get(dayOf(o.placedAt));
+      if (!slot) continue;
+      slot.orders += 1;
+      slot.revenueCents += o.payments.reduce((n, p) => n + p.amountCents - p.refundedCents, 0);
+    }
+    return { data: days.map((day) => ({ day, ...byDay.get(day)! })) };
   }
 
   @Get('top-products')
@@ -85,8 +94,8 @@ export class AdminStatsController {
   @Get('low-stock')
   async lowStock() {
     const data = await this.prisma.$queryRaw<{ id: string; name: string; sku: string; stock: number; lowStockThreshold: number }[]>`
-      SELECT id, name, sku, stock, "lowStockThreshold" FROM products
-      WHERE status <> 'ARCHIVED' AND stock <= "lowStockThreshold" ORDER BY stock, name`;
+      SELECT id, name, sku, stock, lowStockThreshold FROM products
+      WHERE status <> 'ARCHIVED' AND stock <= lowStockThreshold ORDER BY stock, name`;
     return { data };
   }
 }

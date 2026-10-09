@@ -1,0 +1,52 @@
+/**
+ * Premier démarrage en production (et à chaque déploiement : le script ne crée que ce qui manque).
+ *
+ *   node dist/cli/bootstrap.js                 → compte admin, catégories, livraison
+ *   node dist/cli/bootstrap.js --with-catalog  → + montres de départ si le catalogue est vide
+ *
+ * Ne supprime ni ne modifie jamais de données existantes (contrairement à `npm run db:seed`).
+ * Le mot de passe d'un admin existant n'est jamais changé.
+ */
+import * as argon2 from 'argon2';
+import { PrismaClient } from '@prisma/client';
+import { installCatalog, installReferenceData } from './catalog';
+
+// Charge backend/.env (Node 20.12+), comme l'API.
+try { process.loadEnvFile('.env'); } catch { /* variables fournies par l'hébergeur */ }
+
+async function main() {
+  const withCatalog = process.argv.includes('--with-catalog');
+  const prisma = new PrismaClient();
+  try {
+    let admin = await prisma.user.findFirst({ where: { role: 'ADMIN', deletedAt: null }, orderBy: { createdAt: 'asc' } });
+    if (admin) {
+      console.log(`Admin existant : ${admin.email} (inchangé)`);
+    } else {
+      const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+      const password = process.env.ADMIN_PASSWORD;
+      if (!email || !password || password.length < 12) {
+        throw new Error('Aucun admin : définissez ADMIN_EMAIL et ADMIN_PASSWORD (12 caractères minimum) dans .env');
+      }
+      admin = await prisma.user.create({
+        data: {
+          email, passwordHash: await argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2 }),
+          firstName: 'Admin', lastName: 'GMBIJOUX', role: 'ADMIN', emailVerifiedAt: new Date(),
+        },
+      });
+      console.log(`Admin créé : ${email}`);
+    }
+
+    const refs = await installReferenceData(prisma);
+    console.log(`Catégories : ${Object.keys(refs.cats).length} · livraison : ${refs.shipping.name}`);
+
+    if (withCatalog) {
+      const count = await prisma.product.count();
+      if (count) console.log(`Catalogue déjà rempli (${count} montres) : rien à importer`);
+      else console.log(`Montres importées : ${Object.keys(await installCatalog(prisma, admin.id, refs)).length}`);
+    }
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+main().catch((e) => { console.error(e instanceof Error ? e.message : e); process.exit(1); });

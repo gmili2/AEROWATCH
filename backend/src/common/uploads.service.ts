@@ -6,7 +6,8 @@ import { join, resolve } from 'node:path';
 import { AppError } from './http';
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const UPLOADS_URL = '/uploads';
+/** Sous /api : en hébergement cPanel, seul ce chemin est confié à l'application Node.js. */
+export const UPLOADS_URL = '/api/uploads';
 
 /** Formats acceptés, reconnus par leur signature binaire (le type annoncé par le navigateur n'est pas fiable). */
 function detect(buf: Buffer): 'jpg' | 'png' | 'webp' | null {

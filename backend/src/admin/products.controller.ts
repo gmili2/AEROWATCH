@@ -114,8 +114,8 @@ export class AdminProductsController {
     const where: Prisma.ProductWhereInput = {};
     if (q.status) where.status = q.status;
     if (q.q) where.OR = [
-      { name: { contains: q.q, mode: 'insensitive' } }, { sku: { contains: q.q, mode: 'insensitive' } },
-      { reference: { contains: q.q, mode: 'insensitive' } }, { collection: { name: { contains: q.q, mode: 'insensitive' } } },
+      { name: { contains: q.q } }, { sku: { contains: q.q } },
+      { reference: { contains: q.q } }, { collection: { name: { contains: q.q } } },
     ];
     if (q.lowStock) where.stock = { lte: 3 };
     const [rows, total] = await Promise.all([

@@ -1,14 +1,17 @@
+# Base locale identique à l'hébergement Namecheap (MariaDB 11.4).
 services:
-  postgres:
-    image: postgres:16-alpine
+  mariadb:
+    image: mariadb:11.4
     restart: unless-stopped
     environment:
-      POSTGRES_USER: gmbijoux
-      POSTGRES_PASSWORD: gmbijoux
-      POSTGRES_DB: gmbijoux
+      MARIADB_DATABASE: gmbijoux
+      MARIADB_USER: gmbijoux
+      MARIADB_PASSWORD: gmbijoux
+      MARIADB_ROOT_PASSWORD: gmbijoux-root
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     ports:
-      - "5434:5432"
+      - "3307:3306"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mariadb:/var/lib/mysql
 volumes:
-  pgdata:
+  mariadb:
