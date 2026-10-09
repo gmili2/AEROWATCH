@@ -43,6 +43,9 @@ jobs:
 
       - name: API — client Prisma, vérification et construction
         working-directory: backend
+        env:
+          # Adresse factice : la vérification du schéma l'exige, aucune connexion n'est ouverte ici.
+          DATABASE_URL: mysql://ci:ci@localhost:3306/ci
         run: |
           npx prisma validate
           npx prisma generate
