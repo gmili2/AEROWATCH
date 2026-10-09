@@ -4,12 +4,12 @@
  * Le script vide la base avant de la remplir : ne jamais le lancer en production.
  */
 import { randomBytes } from 'node:crypto';
-import * as argon2 from 'argon2';
 import {
   DiscountType, OrderStatus, PaymentMethod, PaymentStatus, Prisma, PrismaClient,
 } from '@prisma/client';
 import products from '../src/cli/catalog-products.json';
 import { installCatalog, installReferenceData } from '../src/cli/catalog';
+import { hashPassword } from '../src/common/password';
 
 const prisma = new PrismaClient();
 /** Montant en dirhams → centimes. Les prix du catalogue (seed-products.json) sont en DH. */
@@ -71,7 +71,7 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      email: adminEmail, passwordHash: await argon2.hash(adminPassword, { type: argon2.argon2id }),
+      email: adminEmail, passwordHash: await hashPassword(adminPassword),
       firstName: 'Admin', lastName: 'GMBIJOUX', role: 'ADMIN', emailVerifiedAt: new Date(),
     },
   });
@@ -83,7 +83,7 @@ async function main() {
   const cats = refs.cats;
 
   // Les clients de démonstration ne peuvent pas se connecter (mot de passe aléatoire jeté).
-  const customerHash = await argon2.hash(randomBytes(24).toString('hex'), { type: argon2.argon2id });
+  const customerHash = await hashPassword(randomBytes(24).toString('hex'));
   const users: Record<string, string> = {};
   for (const [name, email, since] of CUSTOMERS) {
     const [firstName, ...rest] = name.split(' ');

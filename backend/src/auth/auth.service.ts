@@ -1,12 +1,11 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as argon2 from 'argon2';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { AppError } from '../common/http';
+import { hashPassword, verifyPassword } from '../common/password';
 import { PrismaService } from '../prisma.service';
 
 export const REFRESH_TTL_DAYS = 14;
-const ARGON = { type: argon2.argon2id, memoryCost: 19456, timeCost: 2 } as const;
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
 type Meta = { userAgent?: string; ip?: string };
@@ -16,15 +15,15 @@ const publicUser = (u: { id: string; email: string; firstName: string; lastName:
 @Injectable()
 export class AuthService {
   /** Hash factice, vérifié quand l'email est inconnu pour garder un temps de réponse constant. */
-  private dummyHash = argon2.hash(randomBytes(16).toString('hex'), ARGON);
+  private dummyHash = hashPassword(randomBytes(16).toString('hex'));
 
   constructor(private prisma: PrismaService, private jwt: JwtService) {}
 
-  static hashPassword(password: string) { return argon2.hash(password, ARGON); }
+  static hashPassword(password: string) { return hashPassword(password); }
 
   async login(email: string, password: string, meta: Meta) {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    const ok = await argon2.verify(user?.passwordHash ?? (await this.dummyHash), password);
+    const ok = await verifyPassword(user?.passwordHash ?? (await this.dummyHash), password);
     if (!user || !ok || user.deletedAt) throw new AppError(HttpStatus.UNAUTHORIZED, 'INVALID_CREDENTIALS', 'Email ou mot de passe incorrect');
     if (user.status !== 'ACTIVE') throw new AppError(HttpStatus.FORBIDDEN, 'ACCOUNT_SUSPENDED', 'Compte suspendu');
 
