@@ -9,8 +9,10 @@ import { AppModule } from './app.module';
 import { UPLOADS_URL, UploadsService } from './common/uploads.service';
 import { AllExceptionsFilter, requestId } from './common/http';
 import { validateEnv } from './config';
+import { pinPrismaEngine } from './prisma-engine';
 
 async function bootstrap() {
+  pinPrismaEngine();
   const env = validateEnv(process.env);
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
 

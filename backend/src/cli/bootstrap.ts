@@ -9,6 +9,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../common/password';
+import { pinPrismaEngine } from '../prisma-engine';
 import { installCatalog, installReferenceData } from './catalog';
 
 // Charge backend/.env (Node 20.12+), comme l'API.
@@ -16,6 +17,7 @@ try { process.loadEnvFile('.env'); } catch { /* variables fournies par l'héberg
 
 async function main() {
   const withCatalog = process.argv.includes('--with-catalog');
+  pinPrismaEngine();
   const prisma = new PrismaClient();
   try {
     let admin = await prisma.user.findFirst({ where: { role: 'ADMIN', deletedAt: null }, orderBy: { createdAt: 'asc' } });
