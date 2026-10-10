@@ -68,7 +68,7 @@ export function Collections() {
   return (
     <>
       <section data-reveal style={{ padding: `${L.pageTop} ${L.px} 8px`, display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <span className="mono">Six familles, une même exigence</span>
+        <span className="mono">Huit familles, une même exigence</span>
         <h1 className="display" style={{ lineHeight: 1, fontSize: L.h2 }}>Collections</h1>
       </section>
       <section data-reveal style={{ padding: `40px ${L.px} 0` }}>

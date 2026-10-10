@@ -6,6 +6,8 @@ const SLUGS: Record<Exclude<CategoryId, 'all'>, string> = {
   auto: 'automatiques',
   classique: 'classiques',
   sport: 'sport',
+  coffret: 'avec-coffret',
+  boite: 'boite-simple',
   new: 'nouveautes',
 };
 

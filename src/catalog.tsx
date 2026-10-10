@@ -11,7 +11,7 @@ export type ApiShopProduct = {
   priceCents: number; finalPriceCents: number; onSale: boolean; priceFromCents: number; hasPriceRange: boolean;
   inStock: boolean; lowStock: boolean; stock: number | null; isFeatured: boolean; purchasable: boolean; gender: 'MEN' | 'WOMEN' | 'UNISEX';
   brand: { name: string }; images: { url: string; alt: string | null }[];
-  category: { slug: string }; collection: { name: string } | null; movementType: string; caliber: string | null;
+  category: { slug: string }; collection: { name: string; slug: string } | null; movementType: string; caliber: string | null;
   caseMaterial: string; strapMaterial: string; diameterMm: number; thicknessMm: number | null; lugWidthMm: number | null;
   waterResistanceM: number; glass: string; powerReserveHours: number | null; ratingAvg: number; ratingCount: number;
   publishedAt: string | null; extraSpecs: { tags?: string[]; kind?: string; movement?: string; dims?: string; strap?: string; glass?: string; water?: string } | null;
@@ -19,7 +19,9 @@ export type ApiShopProduct = {
 };
 
 type Tag = Exclude<CategoryId, 'all'>;
-const TAGS: Tag[] = ['homme', 'femme', 'auto', 'classique', 'sport', 'new'];
+const TAGS: Tag[] = ['homme', 'femme', 'auto', 'classique', 'sport', 'coffret', 'boite', 'new'];
+/** Collections de présentation (coffret / boîte simple) → étiquette de la boutique. */
+const COLLECTION_TAG: Record<string, Tag> = { coffret: 'coffret', 'boite-simple': 'boite' };
 const CATEGORY_TAG: Record<string, Tag> = { 'montres-homme': 'homme', 'montres-femme': 'femme', automatiques: 'auto', classiques: 'classique', sport: 'sport' };
 const MOVEMENT: Record<string, string> = { AUTOMATIC: 'Automatique', MANUAL: 'Remontage manuel', QUARTZ: 'Quartz', SOLAR: 'Solaire', KINETIC: 'Kinétique' };
 const NEW_DAYS = 60;
@@ -32,6 +34,7 @@ const swatch = ({ label, colorHex }: ApiSwatch): Swatch => ({ label, colorHex })
 function tagsOf(p: ApiShopProduct): Tag[] {
   const t = new Set<Tag>((p.extraSpecs?.tags ?? []).filter((x): x is Tag => (TAGS as string[]).includes(x)));
   if (CATEGORY_TAG[p.category.slug]) t.add(CATEGORY_TAG[p.category.slug]);
+  if (p.collection && COLLECTION_TAG[p.collection.slug]) t.add(COLLECTION_TAG[p.collection.slug]);
   if (p.gender !== 'WOMEN') t.add('homme');
   if (p.gender !== 'MEN') t.add('femme');
   if (p.movementType === 'AUTOMATIC') t.add('auto');

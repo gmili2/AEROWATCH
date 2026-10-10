@@ -1,4 +1,4 @@
-export type CategoryId = 'all' | 'homme' | 'femme' | 'auto' | 'classique' | 'sport' | 'new';
+export type CategoryId = 'all' | 'homme' | 'femme' | 'auto' | 'classique' | 'sport' | 'coffret' | 'boite' | 'new';
 
 export interface Swatch {
   label: string;
@@ -53,6 +53,8 @@ export const CATS: Record<CategoryId, [string, string]> = {
   auto: ['Automatiques', 'Des mouvements mécaniques qui vivent au rythme du poignet.'],
   classique: ['Classiques', 'L\u2019essentiel, dessiné pour traverser les années.'],
   sport: ['Sport', 'Étanches, robustes, précises — prêtes pour tout.'],
+  coffret: ['Avec coffret', 'Livrées dans leur coffret de présentation, prêtes à offrir.'],
+  boite: ['Boîte simple', 'Livrées dans une boîte simple, au meilleur prix.'],
   new: ['Nouveautés', 'Les dernières pièces entrées dans la collection.'],
 };
 
@@ -62,6 +64,8 @@ export const COLLECTIONS: { id: CategoryId; label: string; sub: string; img: str
   { id: 'auto', label: 'Automatiques', sub: 'La mécanique au poignet', img: 'mouvement' },
   { id: 'classique', label: 'Classiques', sub: 'L\u2019essentiel intemporel', img: 'cadran blanc' },
   { id: 'sport', label: 'Sport', sub: 'Étanches & robustes', img: 'plongée' },
+  { id: 'coffret', label: 'Avec coffret', sub: 'Prêtes à offrir', img: 'coffret' },
+  { id: 'boite', label: 'Boîte simple', sub: 'L’essentiel, au meilleur prix', img: 'boîte' },
   { id: 'new', label: 'Nouveautés', sub: 'Entrées en collection', img: 'nouveauté' },
 ];
 
