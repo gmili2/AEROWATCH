@@ -260,7 +260,6 @@ export function Checkout() {
                   <Radio key={o.id} on={pay === o.id} onClick={() => setPay(o.id)} title={o.t} sub={o.d}
 />
                 ))}
-                <Radio on={false} onClick={() => undefined} disabled title="Carte bancaire" sub="Bientôt disponible" />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <span className="mono">Code promo</span>
