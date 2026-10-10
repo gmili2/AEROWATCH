@@ -5,7 +5,7 @@ import type { Product, Variant } from './data';
 /** Ligne de panier : montre (slug) et, le cas échéant, déclinaison choisie. */
 export interface CartLine { id: string; qty: number; variantId?: string; }
 /** Ligne résolue avec le catalogue courant (prix et libellés à jour). */
-export interface CartItem { key: string; qty: number; product: Product; variant?: Variant; unit: number; label: string | null; sku: string; }
+export interface CartItem { key: string; qty: number; product: Product; variant?: Variant; unit: number; label: string | null; sku: string; image?: string; }
 
 export const lineKey = (id: string, variantId?: string) => (variantId ? `${id}:${variantId}` : id);
 const keyOf = (l: CartLine) => lineKey(l.id, l.variantId);
@@ -90,6 +90,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return [{
         key: keyOf(l), qty: l.qty, product, variant, unit: variant?.price ?? product.price,
         label: variant ? variant.values.map((v) => v.label).join(' · ') : null, sku: variant?.sku ?? product.sku ?? product.id,
+        // Photo de la couleur choisie, sinon la photo principale.
+        image: variant?.imageUrl ?? product.image,
       }];
     });
     const count = items.reduce((a, l) => a + l.qty, 0);

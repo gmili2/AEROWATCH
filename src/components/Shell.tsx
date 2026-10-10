@@ -215,7 +215,9 @@ export function Overlays() {
             return (
               <div key={l.key} style={{ display: 'grid', gridTemplateColumns: '76px minmax(0,1fr)', gap: 16, padding: '20px 0', borderBottom: '1px solid var(--line)' }}>
                 <button className="ph" onClick={() => go(productPath(p.id))} aria-label={p.name} style={{ aspectRatio: '1', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                  <span style={{ width: '52%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />
+                  {l.image
+                    ? <img src={l.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    : <span style={{ width: '52%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />}
                 </button>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>

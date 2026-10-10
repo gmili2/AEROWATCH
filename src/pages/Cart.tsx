@@ -34,7 +34,9 @@ export default function Cart() {
               return (
                 <div key={l.key} style={{ display: 'grid', gridTemplateColumns: L.lineCols, gap: 20, padding: '24px 0', borderTop: '1px solid var(--line)', alignItems: 'center' }}>
                   <Link to={productPath(p.id)} className="ph" aria-label={p.name} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ width: '50%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />
+                    {l.image
+                      ? <img src={l.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ width: '50%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />}
                   </Link>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
@@ -294,7 +296,7 @@ export function Checkout() {
             <span className="mono">Votre commande</span>
             {s.items.map((l) => (
               <div key={l.key} style={{ display: 'grid', gridTemplateColumns: '56px minmax(0,1fr) auto', gap: 14, alignItems: 'center' }}>
-                <span className="ph" style={{ aspectRatio: '1', backgroundImage: l.product.image ? `url(${l.product.image})` : 'repeating-linear-gradient(135deg,rgba(17,17,17,.05) 0 1px,transparent 1px 7px)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                <span className="ph" style={{ aspectRatio: '1', backgroundImage: l.image ? `url("${l.image}")` : 'repeating-linear-gradient(135deg,rgba(17,17,17,.05) 0 1px,transparent 1px 7px)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 600, textTransform: 'uppercase' }}>{l.product.name}</span>
                   <span style={{ fontSize: 12.5, color: 'var(--graphite)' }}>{l.label ? l.label + ' · ' : ''}Qté {l.qty}</span>
