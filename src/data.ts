@@ -30,6 +30,7 @@ export interface Product {
   rating: number;
   reviews: number;
   inStock: boolean;
+  purchasable: boolean; // false : présentée en vitrine, non disponible à la vente
   stock: string;
   movement: string;
   dims: string;

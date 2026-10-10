@@ -9,7 +9,7 @@ type ApiVariant = { id: string; sku: string; values: ApiSwatch[]; priceCents: nu
 export type ApiShopProduct = {
   slug: string; sku: string; name: string; shortDescription: string | null; description: string;
   priceCents: number; finalPriceCents: number; onSale: boolean; priceFromCents: number; hasPriceRange: boolean;
-  inStock: boolean; lowStock: boolean; stock: number | null; isFeatured: boolean; gender: 'MEN' | 'WOMEN' | 'UNISEX';
+  inStock: boolean; lowStock: boolean; stock: number | null; isFeatured: boolean; purchasable: boolean; gender: 'MEN' | 'WOMEN' | 'UNISEX';
   brand: { name: string }; images: { url: string; alt: string | null }[];
   category: { slug: string }; collection: { name: string } | null; movementType: string; caliber: string | null;
   caseMaterial: string; strapMaterial: string; diameterMm: number; thicknessMm: number | null; lugWidthMm: number | null;
@@ -54,7 +54,7 @@ export function toShopProduct(p: ApiShopProduct): Product {
     cats: tagsOf(p),
     price: cheapest ? cheapest.price : euros(p.finalPriceCents),
     old: cheapest ? cheapest.old : p.onSale ? euros(p.priceCents) : null,
-    hasRange: p.hasPriceRange, rating: p.ratingAvg, reviews: p.ratingCount, inStock: p.inStock,
+    hasRange: p.hasPriceRange, rating: p.ratingAvg, reviews: p.ratingCount, inStock: p.inStock, purchasable: p.purchasable,
     stock: !p.inStock ? 'Épuisé — bientôt de retour' : p.lowStock && p.stock ? `Plus que ${p.stock} pièce${p.stock > 1 ? 's' : ''} disponible${p.stock > 1 ? 's' : ''}` : 'En stock — expédiée sous 24 h',
     movement: x.movement ?? movement, dims: x.dims ?? dims, strap: x.strap ?? p.strapMaterial, glass: x.glass ?? p.glass,
     water: x.water ?? `${p.waterResistanceM} m (${Math.round(p.waterResistanceM / 10)} ATM)`,

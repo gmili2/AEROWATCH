@@ -48,7 +48,7 @@ export function ProductCard({ p }: { p: Product }) {
         >
           <HeartIcon fill={fav ? '#111' : 'none'} />
         </button>
-        {p.inStock && <button
+        {p.inStock && p.purchasable && <button
           // Avec plusieurs déclinaisons, le choix (couleur, bracelet…) se fait sur la fiche.
           onClick={(e) => { e.stopPropagation(); if (needsChoice) navigate(productPath(p.id)); else add(p.id, 1, p.variants[0]?.id); }}
           aria-label={needsChoice ? `Choisir les options de ${p.name}` : `Ajouter ${p.name} au panier`}

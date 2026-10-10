@@ -81,8 +81,8 @@ export default function Product() {
   const available = (name: string, label: string) => p.variants.some((v) => v.inStock && matches(p, v, { ...sel, [name]: label }));
   const price = variant?.price ?? p.price;
   const old = variant ? variant.old : p.old;
-  const canBuy = p.variants.length ? !!variant?.inStock : p.inStock;
-  const stockText = !p.variants.length ? p.stock : !variant ? 'Combinaison indisponible' : !variant.inStock ? 'Épuisé dans cette version' : variant.lowStock ? 'Dernières pièces disponibles' : 'En stock — expédiée sous 24 h';
+  const canBuy = p.purchasable && (p.variants.length ? !!variant?.inStock : p.inStock);
+  const stockText = !p.purchasable ? 'Pièce présentée en vitrine' : !p.variants.length ? p.stock : !variant ? 'Combinaison indisponible' : !variant.inStock ? 'Épuisé dans cette version' : variant.lowStock ? 'Dernières pièces disponibles' : 'En stock — expédiée sous 24 h';
   const photos = p.photos.length ? p.photos : p.image ? [p.image] : [];
   const mainPhoto = photos[Math.min(img, Math.max(0, photos.length - 1))];
   const ref = variant?.sku ?? p.sku;
@@ -200,7 +200,7 @@ export default function Product() {
             })}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <QtyStepper qty={qty} h={56} onDec={() => setQty((q) => Math.max(1, q - 1))} onInc={() => setQty((q) => q + 1)} />
-              <button className="btn btn-primary btn-tall" disabled={!canBuy} style={{ flex: 1, minWidth: 200, opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : 'Épuisé'}</button>
+              <button className="btn btn-primary btn-tall" disabled={!canBuy} style={{ flex: 1, minWidth: 200, opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : p.purchasable ? 'Épuisé' : 'Non disponible à la vente'}</button>
             </div>
             {canBuy && <button className="btn btn-outline btn-tall" onClick={() => { buy(); navigate(PATHS.checkout); }}>Acheter maintenant</button>}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -268,7 +268,7 @@ export default function Product() {
             <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
             <span style={{ fontSize: 14 }}>{fmt(price)}{variant && (p.options ?? []).length ? ' · ' + variant.values.map((v) => v.label).join(' · ') : ''}</span>
           </div>
-          <button className="btn btn-primary" disabled={!canBuy} style={{ marginLeft: 'auto', flex: 'none', height: 50, padding: '0 22px', fontSize: 11.5, letterSpacing: '.14em', opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : 'Épuisé'}</button>
+          <button className="btn btn-primary" disabled={!canBuy} style={{ marginLeft: 'auto', flex: 'none', height: 50, padding: '0 22px', fontSize: 11.5, letterSpacing: '.14em', opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : p.purchasable ? 'Épuisé' : 'Non disponible'}</button>
         </div>
       )}
     </>

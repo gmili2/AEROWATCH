@@ -128,6 +128,8 @@ export class CheckoutService {
     for (const w of wanted.values()) {
       const p = products.find((x) => x.slug === w.slug);
       if (!p) { problems.push({ slug: w.slug, variantId: w.variantId, reason: 'UNAVAILABLE' }); continue; }
+      // Montre présentée en vitrine : jamais commandable, quel que soit son stock.
+      if (!p.purchasable) { problems.push({ slug: w.slug, variantId: w.variantId, reason: 'NOT_FOR_SALE' }); continue; }
       // Stock relu après verrouillage.
       const fresh = lock ? await db.product.findUniqueOrThrow({ where: { id: p.id }, select: { stock: true } }) : p;
       const active = p.variants.filter((v) => v.isActive);
@@ -145,7 +147,10 @@ export class CheckoutService {
     }
     if (problems.length) {
       const out = problems.find((x) => x.reason === 'OUT_OF_STOCK');
-      throw err(HttpStatus.CONFLICT, 'CART_INVALID', out
+      const showcase = problems.find((x) => x.reason === 'NOT_FOR_SALE');
+      throw err(HttpStatus.CONFLICT, 'CART_INVALID', showcase
+        ? 'Une montre de votre panier n’est pas disponible à la vente'
+        : out
         ? 'Une montre de votre panier n’est plus disponible en quantité suffisante'
         : 'Une montre de votre panier n’est plus disponible', problems);
     }

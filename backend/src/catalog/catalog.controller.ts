@@ -141,7 +141,7 @@ export class CatalogController {
       priceFromCents: finals.length ? Math.min(...finals) : base.finalPriceCents,
       hasPriceRange: finals.length > 1 && Math.min(...finals) !== Math.max(...finals),
       inStock: p.stock > 0, lowStock: p.stock > 0 && p.stock <= p.lowStockThreshold, stock: p.stock <= p.lowStockThreshold ? p.stock : null,
-      isFeatured: p.isFeatured, gender: p.gender, brand: p.brand, category: p.category, collection: p.collection,
+      isFeatured: p.isFeatured, purchasable: p.purchasable, gender: p.gender, brand: p.brand, category: p.category, collection: p.collection,
       movementType: p.movementType, caliber: p.caliber, caseMaterial: p.caseMaterial, strapMaterial: p.strapMaterial,
       color: p.color, dialColor: p.dialColor, diameterMm: Number(p.diameterMm), thicknessMm: p.thicknessMm == null ? null : Number(p.thicknessMm),
       lugWidthMm: p.lugWidthMm, waterResistanceM: p.waterResistanceM, glass: p.glass, powerReserveHours: p.powerReserveHours,

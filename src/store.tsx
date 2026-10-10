@@ -60,7 +60,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCart((c) => {
       const ok = c.filter((l) => {
         const p = catalog.find(l.id);
-        if (!p) return false;
+        if (!p || !p.purchasable) return false;
         return l.variantId ? p.variants.some((v) => v.id === l.variantId) : !p.variants.length;
       });
       return ok.length === c.length ? c : ok;

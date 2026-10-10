@@ -47,7 +47,7 @@ type ProductImage = { id: string; url: string; alt: string | null; isPrimary: bo
 type ApiCategory = { id: string; name: string; slug: string; description: string | null; imageUrl: string | null; position: number; isActive: boolean; _count: { products: number } };
 type ApiProduct = {
   id: string; name: string; sku: string; reference: string; description: string; priceCents: number; salePriceCents: number | null;
-  stock: number; status: string; brand: Ref; category: Ref; collection: Ref | null; movementType: string; caseMaterial: string;
+  stock: number; status: string; purchasable: boolean; brand: Ref; category: Ref; collection: Ref | null; movementType: string; caseMaterial: string;
   strapMaterial: string; color: string; diameterMm: number; waterResistanceM: number; glass: string; powerReserveHours: number | null;
   warrantyMonths: number; soldCount: number; images: ProductImage[];
   options: { id: string; name: string; values: { id: string; label: string; colorHex: string | null }[] }[];
@@ -76,7 +76,7 @@ type Overview = { revenueCents: number; ordersCount: number; ordersToProcess: nu
 type AProduct = {
   id: string; name: string; sku: string; reference: string; description: string; collection: string; category: string;
   price: string; sale: string; stock: string; status: string; brand: string; movement: string; caseMat: string; strap: string;
-  color: string; diameter: string; water: string; glass: string; reserve: string; warranty: string; sold: number; images: ProductImage[];
+  color: string; diameter: string; water: string; glass: string; reserve: string; warranty: string; sold: number; images: ProductImage[]; purchasable: boolean;
   options: VOption[]; variants: VRow[];
 };
 /** Option en cours d'édition (Couleur, Bracelet…) ; `color` affiche des pastilles. */
@@ -100,7 +100,7 @@ const toProduct = (p: ApiProduct): AProduct => ({
   category: p.category.name, price: euros(p.priceCents), sale: euros(p.salePriceCents), stock: String(p.stock), status: labelOf(PSTATUS, p.status),
   brand: p.brand.name, movement: labelOf(MOVES, p.movementType), caseMat: p.caseMaterial, strap: p.strapMaterial, color: p.color,
   diameter: String(p.diameterMm), water: String(p.waterResistanceM), glass: p.glass, reserve: p.powerReserveHours == null ? '' : String(p.powerReserveHours),
-  warranty: String(p.warrantyMonths), sold: p.soldCount, images: p.images,
+  warranty: String(p.warrantyMonths), sold: p.soldCount, images: p.images, purchasable: p.purchasable,
   options: p.options.map((o) => ({
     name: o.name, color: o.values.some((v) => v.colorHex), values: o.values.map((v) => ({ label: v.label, hex: v.colorHex ?? '#111111' })),
   })),
@@ -597,8 +597,8 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   };
   const openProduct = (p?: AProduct) => {
     if (!p) return openForm('product', null, { name: '', sku: '', reference: '', description: '', price: '', sale: '', stock: '0', status: 'Brouillon', brand: refs.brands[0]?.name ?? '', collection: COLLS[0] ?? '', category: CATS[0] ?? '', movement: 'Automatique', caseMat: 'Acier 316L', strap: '', color: 'Noir', diameter: '', water: '', glass: 'Saphir', reserve: '', warranty: '24' });
-    const { images: imgs, sold, id, options, variants, ...rest } = p;
-    void sold;
+    const { images: imgs, sold, id, options, variants, purchasable, ...rest } = p;
+    void sold; void purchasable;
     openForm('product', id, rest, imgs, options, variants);
   };
   const openCoupon = (c?: Coupon) => openForm('coupon', c?.id ?? null, c
@@ -935,7 +935,10 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                         <span style={{ fontSize: 13.5 }}>{p.category}</span>
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 14 }}><span>{fmt(Number(p.price) || 0)}</span>{p.sale && <span style={{ fontSize: 12, color: '#6B6B66' }}>promo {fmt(Number(p.sale))}</span>}</span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5 }}><Dot size={7} c={st === 0 ? DOT.red : st <= 3 ? DOT.amber : DOT.green} />{p.stock}</span>
-                        <Pill dot={p.status === 'Actif' ? DOT.green : p.status === 'Brouillon' ? DOT.amber : DOT.grey}>{p.status}</Pill>
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
+                          <Pill dot={p.status === 'Actif' ? DOT.green : p.status === 'Brouillon' ? DOT.amber : DOT.grey}>{p.status}</Pill>
+                          {!p.purchasable && <span style={{ fontSize: 11.5, color: '#6B6B66' }} title="Non disponible à la vente">Vitrine</span>}
+                        </span>
                         <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                           <SmallBtn onClick={() => openProduct(p)}>Modifier</SmallBtn>
                           <SmallBtn onClick={() => run(async () => {

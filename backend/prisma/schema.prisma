@@ -296,6 +296,8 @@ model Product {
   lowStockThreshold Int           @default(3)
   status            ProductStatus @default(DRAFT)
   isFeatured        Boolean       @default(false)
+  /// false : montre présentée en vitrine, impossible à commander (contrôlé par l\'API).
+  purchasable       Boolean       @default(true)
   gender            Gender        @default(UNISEX)
 
   brandId      String  @db.Char(36)
