@@ -5,6 +5,7 @@ import { QtyStepper } from '../components/Shell';
 import { useCatalog } from '../catalog';
 import { fmt } from '../data';
 import { useLayout } from '../layout';
+import { track } from '../pixel';
 import { PATHS, productPath, shopPath } from '../routes';
 import { useStore } from '../store';
 
@@ -142,6 +143,12 @@ export function Checkout() {
   const { status } = useCatalog();
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [step]);
+  // Pixel Meta : début de commande, une fois le panier chargé.
+  const started = s.items.length > 0;
+  useEffect(() => {
+    if (started) track('InitiateCheckout', { content_ids: s.items.map((l) => l.product.id), num_items: s.count, value: s.subtotal, currency: 'MAD' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [started]);
 
   const items = s.items.map((l) => ({ slug: l.product.id, variantId: l.variant?.id, quantity: l.qty }));
   const itemsKey = JSON.stringify(items);
@@ -187,6 +194,7 @@ export function Checkout() {
           address: { line1: addr.line1, city: addr.city, postalCode: addr.postalCode || undefined, country: 'MA' },
         },
       });
+      track('Purchase', { content_ids: s.items.map((l) => l.product.id), content_type: 'product', num_items: s.count, value: r.data.totalCents / 100, currency: 'MAD' });
       setDone(r.data); s.clear(); setIdemKey(newKey()); setStep(3);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Serveur injoignable, votre commande n’a pas été enregistrée. Réessayez.');

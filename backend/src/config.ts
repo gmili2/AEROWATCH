@@ -18,6 +18,8 @@ const schema = z.object({
   MAIL_FROM: z.string().default('GMBIJOUX <onboarding@resend.dev>'),
   // Adresse(s) de la boutique prévenue(s) à chaque commande, séparées par des virgules.
   ORDER_NOTIFY_EMAIL: z.string().optional(),
+  // Pixel Meta (Facebook) des campagnes publicitaires : identifiant numérique, facultatif.
+  FB_PIXEL_ID: z.string().regex(/^\d{5,20}$/, 'FB_PIXEL_ID : identifiant numérique du pixel').optional(),
 });
 
 export type Env = z.infer<typeof schema>;

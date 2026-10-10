@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useCatalog } from './catalog';
 import type { Product, Variant } from './data';
+import { track } from './pixel';
 
 /** Ligne de panier : montre (slug) et, le cas échéant, déclinaison choisie. */
 export interface CartLine { id: string; qty: number; variantId?: string; }
@@ -100,6 +101,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       cart, items, favs, count, subtotal, drawer, menu, search,
       add: (id, qty = 1, variantId) => {
         const key = lineKey(id, variantId);
+        const p = catalog.find(id);
+        const unit = (variantId && p?.variants.find((v) => v.id === variantId)?.price) || p?.price;
+        if (p) track('AddToCart', { content_ids: [id], content_name: p.name, content_type: 'product', value: (unit ?? 0) * qty, currency: 'MAD' });
         setCart((c) => {
           const i = c.findIndex((l) => keyOf(l) === key);
           if (i < 0) return [...c, { id, qty, ...(variantId && { variantId }) }];

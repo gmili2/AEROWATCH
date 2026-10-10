@@ -71,7 +71,7 @@ export type ShopCategory = { slug: string; name: string; description: string | n
 export const CATEGORY_OF: Partial<Record<Tag, string>> = Object.fromEntries(Object.entries(CATEGORY_TAG).map(([slug, tag]) => [tag, slug]));
 
 /** Boutique en accès privé : code requis ? déjà saisi sur ce navigateur ? */
-export type SiteInfo = { private: boolean; unlocked: boolean };
+export type SiteInfo = { private: boolean; unlocked: boolean; pixelId?: string | null };
 
 type Catalog = {
   site: SiteInfo | null;

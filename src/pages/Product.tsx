@@ -6,6 +6,7 @@ import { Crumbs, ProductGrid } from '../components/Catalog';
 import { QtyStepper } from '../components/Shell';
 import { fmt, ratingF, stars, type Product as P, type Variant } from '../data';
 import { useLayout } from '../layout';
+import { track } from '../pixel';
 import { PATHS, shopPath } from '../routes';
 import { useStore } from '../store';
 
@@ -44,6 +45,10 @@ export default function Product() {
 
   useEffect(() => { setImg(-1); setZoom(false); setQty(1); }, [id]);
   useEffect(() => { if (p) document.title = `${p.name} — GMBIJOUX`; }, [p]);
+  useEffect(() => {
+    if (p) track('ViewContent', { content_ids: [p.id], content_name: p.name, content_type: 'product', value: p.price, currency: 'MAD' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p?.id]);
   useEffect(() => {
     let live = true;
     api<{ data: { reviews: Review[] } }>(`/products/${encodeURIComponent(id)}`)
