@@ -70,3 +70,14 @@ export async function api<T = unknown>(path: string, init: { method?: string; bo
   }
   return parse(res);
 }
+
+/** Récupère toutes les pages d'une liste paginée de l'API (50 éléments par page). */
+export async function apiAll<T>(path: string): Promise<T[]> {
+  const sep = path.includes('?') ? '&' : '?';
+  const out: T[] = [];
+  for (let page = 1; ; page++) {
+    const r = await api<Page<T>>(`${path}${sep}limit=50&page=${page}`);
+    out.push(...r.data);
+    if (page >= r.meta.totalPages) return out;
+  }
+}

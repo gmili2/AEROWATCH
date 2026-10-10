@@ -93,10 +93,11 @@ export default function Home() {
   const [tab, setTab] = useState<(typeof TABS)[number][0]>('all');
   const { products } = useCatalog();
   const items = useMemo(() => {
-    if (tab === 'new') return products.filter((p) => p.cats.includes('new'));
+    // Aperçu de 8 montres : le catalogue complet (paginé) est sur « Voir tout le catalogue ».
+    if (tab === 'new') return products.filter((p) => p.cats.includes('new')).slice(0, 8);
     if (tab === 'best') return products.slice(0, 4); // déjà triées par ventes
-    if (tab === 'promo') return products.filter((p) => p.old);
-    return products;
+    if (tab === 'promo') return products.filter((p) => p.old).slice(0, 8);
+    return products.slice(0, 8);
   }, [tab, products]);
 
   return (

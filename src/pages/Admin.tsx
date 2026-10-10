@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { api, ApiError, login, logout, refreshSession, setLogoutHandler, type ApiUser, type Page } from '../api';
+import { api, apiAll, ApiError, login, logout, refreshSession, setLogoutHandler, type ApiUser } from '../api';
+import { pageList } from '../components/Pagination';
 import { useLayout } from '../layout';
 
 /* ------------------------------------------------------------------ */
@@ -201,6 +202,29 @@ function OutlineBtn({ onClick, children }: { onClick: () => void; children: Reac
     <button className="adm-outline" onClick={onClick} style={{ height: 40, padding: '0 18px', borderRadius: 999, background: 'transparent', border: '1px solid #111', fontSize: 11, fontWeight: 600, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer' }}>
       {children}
     </button>
+  );
+}
+
+const ADMIN_PER_PAGE = 25;
+
+function AdminPager({ page, total, onChange }: { page: number; total: number; onChange: (p: number) => void }) {
+  const pages = Math.ceil(total / ADMIN_PER_PAGE);
+  if (pages <= 1) return null;
+  const btn = (active: boolean, disabled = false): CSSProperties => ({
+    minWidth: 34, height: 34, padding: '0 10px', borderRadius: 999, fontSize: 12.5, cursor: disabled ? 'default' : 'pointer',
+    border: `1px solid ${active ? '#111' : '#D9D9D4'}`, background: active ? '#111' : '#fff', color: active ? '#fff' : '#111', opacity: disabled ? 0.35 : 1,
+  });
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 12.5, color: '#6B6B66' }}>{(page - 1) * ADMIN_PER_PAGE + 1}–{Math.min(page * ADMIN_PER_PAGE, total)} sur {total}</span>
+      <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+        <button style={btn(false, page <= 1)} disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="Page précédente">←</button>
+        {pageList(page, pages).map((n, i) => n === '…'
+          ? <span key={`e${i}`} style={{ padding: '6px 4px', color: '#6B6B66' }}>…</span>
+          : <button key={n} style={btn(n === page)} aria-current={n === page ? 'page' : undefined} onClick={() => onChange(n)}>{n}</button>)}
+        <button style={btn(false, page >= pages)} disabled={page >= pages} onClick={() => onChange(page + 1)} aria-label="Page suivante">→</button>
+      </span>
+    </div>
   );
 }
 
@@ -478,6 +502,8 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   const [sales, setSales] = useState<{ day: string; revenue: number }[]>([]);
   const [refs, setRefs] = useState<Refs>({ categories: [], collections: [], brands: [] });
   const [pq, setPq] = useState('');
+  const [productPage, setProductPage] = useState(1);
+  const [orderPage, setOrderPage] = useState(1);
   const [pf, setPf] = useState('Tous');
   const [of, setOf] = useState<OrderStatus | 'ALL'>('ALL');
   const [rf, setRf] = useState<ReviewStatus | 'ALL'>('PENDING');
@@ -513,12 +539,12 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   const fail = useCallback((e: unknown) => flash(e instanceof ApiError ? e.message : 'Serveur injoignable'), [flash]);
 
   /* ---------- chargement ---------- */
-  const loadProducts = useCallback(() => api<Page<ApiProduct>>('/admin/products?limit=50').then((r) => setProducts(r.data.map(toProduct))), []);
-  const loadOrders = useCallback(() => api<Page<ApiOrder>>('/admin/orders?limit=50').then((r) => setOrders(r.data.map(toOrder))), []);
+  const loadProducts = useCallback(() => apiAll<ApiProduct>('/admin/products').then((d) => setProducts(d.map(toProduct))), []);
+  const loadOrders = useCallback(() => apiAll<ApiOrder>('/admin/orders').then((d) => setOrders(d.map(toOrder))), []);
   const loadStats = useCallback(() => Promise.all([
     api<{ data: Overview }>('/admin/stats/overview').then((r) => setOverview(r.data)),
     api<{ data: { day: string; revenueCents: number }[] }>('/admin/stats/sales-by-day?days=14').then((r) => setSales(r.data.map((d) => ({ day: d.day, revenue: d.revenueCents / 100 })))),
-    api<Page<ApiUserRow>>('/admin/users?role=CUSTOMER&limit=50').then((r) => setClients(r.data.map(toClient))),
+    apiAll<ApiUserRow>('/admin/users?role=CUSTOMER').then((d) => setClients(d.map(toClient))),
   ]), []);
   const loadPromos = useCallback(() => Promise.all([
     api<{ data: ApiCoupon[] }>('/admin/coupons').then((r) => setCoupons(r.data.map(toCoupon))),
@@ -528,7 +554,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   useEffect(() => {
     Promise.all([
       loadProducts(), loadOrders(), loadStats(), loadPromos(),
-      api<Page<ApiReview>>('/admin/reviews?limit=50').then((r) => setReviews(r.data.map(toReview))),
+      apiAll<ApiReview>('/admin/reviews').then((d) => setReviews(d.map(toReview))),
       Promise.all([api<{ data: Ref[] }>('/categories'), api<{ data: Ref[] }>('/collections'), api<{ data: Ref[] }>('/brands')])
         .then(([c, co, b]) => setRefs({ categories: c.data, collections: co.data, brands: b.data })),
     ]).catch(fail).finally(() => setLoaded(true));
@@ -907,9 +933,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
         {view === 'products' && (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <input className="adm-input" value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Rechercher par nom, référence, SKU…" style={{ flex: 1, minWidth: 220, maxWidth: 420, height: 44, padding: '0 18px', border: '1px solid #D9D9D4', borderRadius: 999, background: '#fff', fontSize: 14, outline: 'none' }} />
+              <input className="adm-input" value={pq} onChange={(e) => { setPq(e.target.value); setProductPage(1); }} placeholder="Rechercher par nom, référence, SKU…" style={{ flex: 1, minWidth: 220, maxWidth: 420, height: 44, padding: '0 18px', border: '1px solid #D9D9D4', borderRadius: 999, background: '#fff', fontSize: 14, outline: 'none' }} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {['Tous', 'Actif', 'Brouillon', 'Archivé', 'Stock faible'].map((l) => <Chip key={l} h={44} active={pf === l} onClick={() => setPf(l)}>{l}</Chip>)}
+                {['Tous', 'Actif', 'Brouillon', 'Archivé', 'Stock faible'].map((l) => <Chip key={l} h={44} active={pf === l} onClick={() => { setPf(l); setProductPage(1); }}>{l}</Chip>)}
                 <OutlineBtn onClick={openImport}>Importer un fichier</OutlineBtn>
               </div>
             </div>
@@ -918,7 +944,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
               return (
                 <>
                   <div style={thRow(cols)}><span /><span>Montre</span><span>Catégorie</span><span>Prix</span><span>Stock</span><span>Statut</span><span /></div>
-                  {productRows.map((p) => {
+                  {productRows.slice((productPage - 1) * ADMIN_PER_PAGE, productPage * ADMIN_PER_PAGE).map((p) => {
                     const st = Number(p.stock);
                     return (
                       <div key={p.id} className="adm-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '12px 20px', borderBottom: '1px solid #EDEDEA', transition: 'background .25s' }}>
@@ -953,6 +979,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                 </>
               );
             })())}
+            <AdminPager page={productPage} total={productRows.length} onChange={setProductPage} />
           </>
         )}
 
@@ -960,7 +987,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
           <>
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
               {([['ALL', 'Toutes'], ...OS.map((o) => [o[0], o[1]])] as [OrderStatus | 'ALL', string][]).map(([k, label]) => (
-                <Chip key={k} active={of === k} onClick={() => setOf(k)}>{label}<span style={{ fontFamily: 'var(--mono)', fontSize: 11, opacity: 0.7 }}>{k === 'ALL' ? orders.length : orders.filter((o) => o.status === k).length}</span></Chip>
+                <Chip key={k} active={of === k} onClick={() => { setOf(k); setOrderPage(1); }}>{label}<span style={{ fontFamily: 'var(--mono)', fontSize: 11, opacity: 0.7 }}>{k === 'ALL' ? orders.length : orders.filter((o) => o.status === k).length}</span></Chip>
               ))}
             </div>
             {tableWrap(1100, (() => {
@@ -968,7 +995,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
               return (
                 <>
                   <div style={thRow(cols)}><span>N°</span><span>Client</span><span>Date</span><span>Articles</span><span>Total</span><span>Paiement</span><span>Statut</span></div>
-                  {orderRows.map((o) => (
+                  {orderRows.slice((orderPage - 1) * ADMIN_PER_PAGE, orderPage * ADMIN_PER_PAGE).map((o) => (
                     <button key={o.number} className="adm-row" onClick={() => openOrder(o.number)} style={{ width: '100%', display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '15px 20px', border: 0, borderBottom: '1px solid #EDEDEA', background: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .25s' }}>
                       <span style={{ fontFamily: 'var(--mono)', fontSize: 12.5 }}>{o.number}</span>
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}><span style={{ fontSize: 14 }}>{o.customer}</span><span style={{ fontSize: 12, color: '#6B6B66', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{o.email}</span></span>
@@ -982,6 +1009,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                 </>
               );
             })())}
+            <AdminPager page={orderPage} total={orderRows.length} onChange={setOrderPage} />
           </>
         )}
 
