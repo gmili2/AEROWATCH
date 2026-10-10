@@ -83,6 +83,8 @@ export default function Product() {
   const old = variant ? variant.old : p.old;
   const canBuy = p.variants.length ? !!variant?.inStock : p.inStock;
   const stockText = !p.variants.length ? p.stock : !variant ? 'Combinaison indisponible' : !variant.inStock ? 'Épuisé dans cette version' : variant.lowStock ? 'Dernières pièces disponibles' : 'En stock — expédiée sous 24 h';
+  const photos = p.photos.length ? p.photos : p.image ? [p.image] : [];
+  const mainPhoto = photos[Math.min(img, Math.max(0, photos.length - 1))];
   const ref = variant?.sku ?? p.sku;
   const buy = () => { if (canBuy) add(p.id, qty, variant?.id); };
 
@@ -110,21 +112,31 @@ export default function Product() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setZoom((z) => !z); } }}
               onMouseMove={(e) => zoom && setZxy(pos(e))}
               onMouseLeave={() => zoom && setZoom(false)}
-              className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', cursor: zoom ? 'zoom-out' : 'zoom-in', background: p.image ? '#f5f4f1' : 'transparent' }}
+              className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', cursor: zoom ? 'zoom-out' : 'zoom-in', background: mainPhoto ? '#f5f4f1' : 'transparent' }}
             >
               <div className="ph" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: zoom ? 'scale(2.2)' : 'scale(1)', transformOrigin: `${zxy.x}% ${zxy.y}%`, transition: 'transform .6s var(--ease)' }}>
-                {p.image
-                  ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+                {mainPhoto
+                  ? <img src={mainPhoto} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
                   : <div style={{ width: '54%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <div style={{ width: '72%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.1)' }} />
                     </div>
                 }
               </div>
-              <span className="ph-caption">photo · {p.name}{variant ? ' ' + variant.values.map((v) => v.label).join(' · ') : ''} — {VIEWS[img]}</span>
+              <span className="ph-caption">photo · {p.name}{variant ? ' ' + variant.values.map((v) => v.label).join(' · ') : ''} — {photos.length ? `${img + 1} / ${photos.length}` : VIEWS[img]}</span>
               <span style={{ position: 'absolute', right: 14, top: 14, padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,.9)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase' }}>
                 {zoom ? 'Zoom × 2,2' : 'Cliquer pour zoomer'}
               </span>
             </div>
+            {photos.length > 1 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(photos.length, 6)},minmax(0,1fr))`, gap: 10 }}>
+                {photos.slice(0, 6).map((src, i) => (
+                  <button key={src} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Photo ${i + 1}`} aria-pressed={i === img}
+                    style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: 'none', background: '#f5f4f1', border: `1px solid ${i === img ? '#111' : 'transparent'}`, overflow: 'hidden', position: 'relative' }}>
+                    <img src={src} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                ))}
+              </div>
+            ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 10 }}>
               {VIEWS.map((v, i) => (
                 <button
@@ -136,6 +148,7 @@ export default function Product() {
                 </button>
               ))}
             </div>
+            )}
           </div>
 
           <div data-reveal style={{ position: L.sticky, top: 110, display: 'flex', flexDirection: 'column', gap: 22, paddingTop: 6 }}>

@@ -58,7 +58,8 @@ export function useReveal(key: string) {
     }
     const io = new IntersectionObserver(
       (entries) => entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }),
-      { threshold: 0.08, rootMargin: '0px 0px -40px 0px' },
+      // Seuil 0 : un bloc très haut (grille de nombreux produits) n'atteindrait jamais un pourcentage visible.
+      { threshold: 0, rootMargin: '0px 0px -40px 0px' },
     );
     const scan = () => document.querySelectorAll('[data-reveal]:not(.in)').forEach((el) => io.observe(el));
     scan();

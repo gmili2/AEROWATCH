@@ -42,6 +42,7 @@ export interface Product {
   variants: Variant[];
   swatches: Swatch[];
   image?: string; // photo principale
+  photos: string[]; // toutes les photos, la principale en premier
 }
 
 export const CATS: Record<CategoryId, [string, string]> = {

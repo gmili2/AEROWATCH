@@ -50,7 +50,7 @@ export function toShopProduct(p: ApiShopProduct): Product {
   const dims = [`Ø ${mm(p.diameterMm)} mm`, p.thicknessMm && `épaisseur ${mm(p.thicknessMm)} mm`, p.lugWidthMm && `entre-cornes ${p.lugWidthMm} mm`].filter(Boolean).join(' · ');
   const movement = [MOVEMENT[p.movementType] ?? p.movementType, p.caliber && `calibre ${p.caliber}`, p.powerReserveHours && `réserve de marche ${p.powerReserveHours} h`].filter(Boolean).join(' · ');
   return {
-    id: p.slug, sku: p.sku, name: p.name, brand: p.brand.name === HOUSE ? undefined : p.brand.name, image: p.images[0]?.url, col: p.collection?.name ?? '', kind: p.shortDescription ?? x.kind ?? `${MOVEMENT[p.movementType] ?? ''} · ${mm(p.diameterMm)} mm`,
+    id: p.slug, sku: p.sku, name: p.name, brand: p.brand.name === HOUSE ? undefined : p.brand.name, image: p.images[0]?.url, photos: p.images.map((i) => i.url), col: p.collection?.name ?? '', kind: p.shortDescription ?? x.kind ?? `${MOVEMENT[p.movementType] ?? ''} · ${mm(p.diameterMm)} mm`,
     cats: tagsOf(p),
     price: cheapest ? cheapest.price : euros(p.finalPriceCents),
     old: cheapest ? cheapest.old : p.onSale ? euros(p.priceCents) : null,
