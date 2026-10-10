@@ -3,6 +3,7 @@ import { COLLECTIONS, badgeOf, fmt, stars, type Product } from '../data';
 import { useCatalog } from '../catalog';
 import { useLayout } from '../layout';
 import { productPath, shopPath } from '../routes';
+import { useTilt } from '../tilt';
 import { useStore } from '../store';
 import { ArrowIcon, BagIcon, HeartIcon } from './icons';
 
@@ -23,15 +24,17 @@ export function ProductCard({ p }: { p: Product }) {
   const fav = favs.includes(p.id);
   const badge = p.inStock ? badgeOf(p) : 'Épuisé';
   const needsChoice = p.variants.length > 1;
+  const tilt = useTilt<HTMLDivElement>();
   return (
     <article className="card" onClick={() => navigate(productPath(p.id))} style={{ display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', minWidth: 0 }}>
-      <div className="ph" style={{ aspectRatio: '4/5', backgroundImage: 'none', overflow: 'hidden' }}>
+      <div ref={tilt} className="ph tilt" style={{ aspectRatio: '4/5', backgroundImage: 'none', overflow: 'hidden' }}>
         <div className="ph zoom-hover" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: p.image ? '#f5f4f1' : 'transparent' }}>
           {p.image
             ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', transition: 'transform .6s var(--ease)' }} onMouseEnter={(e) => { (e.currentTarget.style.transform = 'scale(1.06)'); }} onMouseLeave={(e) => { (e.currentTarget.style.transform = 'scale(1)'); }} />
             : <Dial />
           }
         </div>
+        <span className="tilt-glare" />
         {p.brand && (
           <span style={{ position: 'absolute', top: 12, left: 12, padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(8px)', fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', color: '#111', fontWeight: 600 }}>{p.brand}</span>
         )}

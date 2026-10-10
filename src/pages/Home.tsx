@@ -2,11 +2,13 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CollectionsGrid, Dial, ProductGrid } from '../components/Catalog';
 import { ArrowIcon } from '../components/icons';
+import { Watch3D } from '../components/Watch3D';
 import { Logo } from '../components/Shell';
 import { useCatalog } from '../catalog';
 import { PILLARS, fmt } from '../data';
 import { useLayout, type Layout } from '../layout';
 import { PATHS, productPath, shopPath } from '../routes';
+import { useTilt } from '../tilt';
 
 /** Variante du hero : 'noir' (par défaut) ou 'editorial'. */
 const HERO_STYLE: 'noir' | 'editorial' = 'noir';
@@ -23,6 +25,7 @@ function HeroNoir({ L }: { L: Layout }) {
   // Montre mise en avant : la première commandable avec une photo (sinon la première du catalogue).
   const { products } = useCatalog();
   const hero = products.find((p) => p.purchasable && p.image) ?? products.find((p) => p.image) ?? products[0];
+  const tilt = useTilt<HTMLButtonElement>(9);
   return (
     <section style={{ background: '#111', color: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: L.split, gap: L.heroGap, alignItems: 'center', padding: `${L.heroPad} ${L.px}` }}>
@@ -39,12 +42,13 @@ function HeroNoir({ L }: { L: Layout }) {
         </div>
         <div data-reveal style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
           <button
-            className="ph ph-dark" onClick={() => navigate(hero ? productPath(hero.id) : shopPath('all'))} aria-label={hero ? `Voir la ${hero.name}` : 'Voir les montres'}
+            ref={tilt} className="ph ph-dark tilt" onClick={() => navigate(hero ? productPath(hero.id) : shopPath('all'))} aria-label={hero ? `Voir la ${hero.name}` : 'Voir les montres'}
             style={{ width: '100%', maxWidth: 580, aspectRatio: '1', borderRadius: '50%', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', padding: 0 }}
           >
             {hero?.image
               ? <img src={hero.image} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <Dial size="58%" dark />}
+            <span className="tilt-glare" />
           </button>
           <div style={{ position: 'absolute', right: 0, bottom: '6%', background: 'var(--ivory)', color: '#111', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 190 }}>
             {hero && <>
@@ -81,6 +85,42 @@ function HeroEditorial({ L }: { L: Layout }) {
       <div data-reveal className="ph" style={{ width: '100%', marginTop: 32, aspectRatio: L.wideRatio, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ height: '62%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.16)' }} />
         <span className="ph-caption" style={{ left: 18, bottom: 16 }}>photo campagne · Nocturne au poignet</span>
+      </div>
+    </section>
+  );
+}
+
+const DETAILS = [
+  { n: '01', t: 'Boîtier acier 316L', d: 'Poli et satiné, résistant à la corrosion.' },
+  { n: '02', t: 'Verre saphir', d: 'Inrayable au quotidien, traité antireflet.' },
+  { n: '03', t: 'Bracelet à maillons', d: 'Ajusté à votre poignet avant l’envoi.' },
+];
+
+/** Montre en 3D : on la fait tourner pour en voir le boîtier, la lunette et le bracelet. */
+function Showcase3D({ L }: { L: Layout }) {
+  return (
+    <section style={{ marginTop: L.sec, background: '#111', color: '#fff', padding: `${L.sec} ${L.px}`, display: 'grid', gridTemplateColumns: L.split, gap: L.pGap, alignItems: 'center', overflow: 'hidden' }}>
+      <div data-reveal style={{ display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 480 }}>
+        <span className="mono" style={{ color: '#B5B5AF' }}>En détail</span>
+        <h2 className="display" style={{ fontSize: L.h2 }}>Faites-la tourner.</h2>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.7, color: '#CFCFCA' }}>
+          Glissez pour faire pivoter la montre. Ses aiguilles donnent l’heure exacte.
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', borderTop: '1px solid #2A2A2A', marginTop: 8 }}>
+          {DETAILS.map((d) => (
+            <div key={d.n} style={{ display: 'flex', gap: 16, padding: '16px 0', borderBottom: '1px solid #2A2A2A' }}>
+              <span className="mono" style={{ color: '#77776F', fontSize: 10.5 }}>{d.n}</span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontStretch: '115%', fontWeight: 600, textTransform: 'uppercase', fontSize: 13.5 }}>{d.t}</span>
+                <span style={{ fontSize: 14, color: '#B5B5AF' }}>{d.d}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+        <Link className="btn btn-light" to={shopPath('all')} style={{ alignSelf: 'flex-start', marginTop: 8 }}>Voir les montres<ArrowIcon /></Link>
+      </div>
+      <div data-reveal style={{ display: 'flex', justifyContent: 'center' }}>
+        <Watch3D size="min(100%, 560px)" />
       </div>
     </section>
   );
@@ -132,6 +172,8 @@ export default function Home() {
           <Link className="btn btn-outline" to={shopPath('all')} style={{ padding: '0 32px' }}>Voir tout le catalogue</Link>
         </div>
       </section>
+
+      <Showcase3D L={L} />
 
       <section data-reveal style={{ marginTop: L.sec, padding: `${L.sec} ${L.px}`, background: '#fff', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, textAlign: 'center' }}>
         <Logo size={96} />
