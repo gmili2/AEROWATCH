@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminCategoriesController } from './categories.controller';
+import { ImportService } from './import.service';
 import { AdminOrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 import { AdminProductsController } from './products.controller';
@@ -10,6 +11,6 @@ import { AdminUsersController } from './users.controller';
 
 @Module({
   controllers: [AdminProductsController, AdminCategoriesController, AdminOrdersController, AdminPromotionsController, AdminReviewsController, AdminUsersController, AdminStatsController],
-  providers: [OrdersService],
+  providers: [OrdersService, ImportService],
 })
 export class AdminModule {}

@@ -1,5 +1,6 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { PartialType } from '@nestjs/mapped-types';
 import { Gender, MovementType, Prisma, ProductStatus, StockReason } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -10,6 +11,7 @@ import { AuditService } from '../common/audit.service';
 import { CurrentUser, Roles, type AuthUser } from '../common/decorators';
 import { AppError, PageQuery, paged, skipTake } from '../common/http';
 import { MAX_UPLOAD_BYTES, UploadsService } from '../common/uploads.service';
+import { ImportService } from './import.service';
 import { PrismaService } from '../prisma.service';
 import { replaceVariants, syncProductStock, variantInclude, variantValues, VariantsDto } from './variants';
 
@@ -107,7 +109,24 @@ function staleFree(before: Prisma.ProductGetPayload<object>, dto: Partial<Create
 @Roles('ADMIN')
 @Controller('admin/products')
 export class AdminProductsController {
-  constructor(private prisma: PrismaService, private audit: AuditService, private uploads: UploadsService) {}
+  constructor(private prisma: PrismaService, private audit: AuditService, private uploads: UploadsService, private importer: ImportService) {}
+
+  /* ---------- import CSV (catalogue fournisseur) ---------- */
+
+  /** Lecture et contrôle du fichier, sans rien enregistrer. */
+  @Post('import/preview') @HttpCode(200)
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024, files: 1 } }))
+  importPreview(@UploadedFile() file: Express.Multer.File) {
+    return { data: this.importer.analyse(file) };
+  }
+
+  /** Crée les montres valides du fichier (en brouillon sauf « statut = actif ») et télécharge leurs photos. */
+  @Post('import') @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024, files: 1 } }))
+  async importRun(@UploadedFile() file: Express.Multer.File, @CurrentUser() me: AuthUser) {
+    return { data: await this.importer.run(file, me.id) };
+  }
 
   @Get()
   async list(@Query() q: ProductListQuery) {

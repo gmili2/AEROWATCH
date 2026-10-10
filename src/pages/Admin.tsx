@@ -372,7 +372,26 @@ function checkVariants(opts: VOption[], vars: VRow[], basePrice: string, baseSal
 }
 
 type View = 'dash' | 'orders' | 'products' | 'categories' | 'promos' | 'reviews' | 'clients';
-type DrawerKind = 'product' | 'coupon' | 'promo' | 'order' | null;
+type DrawerKind = 'product' | 'coupon' | 'promo' | 'order' | 'import' | null;
+
+/* Import CSV (catalogue fournisseur) */
+type ImportReport = { line: number; name: string; errors: string[]; warnings: string[]; row?: { priceCents: number; salePriceCents: number | null; stock: number; category: string; brand: string; colors: string[]; images: string[]; publish: boolean } };
+type ImportPreview = { reports: ImportReport[]; unknownColumns: string[]; summary: { total: number; valid: number; invalid: number } };
+type ImportResult = {
+  results: { line: number; name: string; status: 'created' | 'skipped' | 'error'; message?: string; images?: number }[];
+  summary: { created: number; skipped: number; errors: number; images: number; newCategories: string[]; newBrands: string[] };
+};
+const IMPORT_TEMPLATE = [
+  'nom;prix;prix_barre;stock;sku;categorie;marque;mouvement;couleurs;diametre;etancheite;bracelet;genre;statut;description;images',
+  'Montre exemple acier;1290;1590;5;EX-001;Classiques;GMBIJOUX;Quartz;Noir|Bleu;40;50;Acier;Homme;Brouillon;Cadran soleil, verre minéral.;https://exemple.com/photo1.jpg | https://exemple.com/photo2.jpg',
+].join('\r\n');
+function downloadTemplate() {
+  // BOM : Excel lit alors correctement les accents.
+  const url = URL.createObjectURL(new Blob(['\uFEFF' + IMPORT_TEMPLATE], { type: 'text/csv;charset=utf-8' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: 'modele-import-montres.csv' });
+  a.click();
+  URL.revokeObjectURL(url);
+}
 type Refs = { categories: Ref[]; collections: Ref[]; brands: Ref[] };
 const MONTH = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', month: 'long', year: 'numeric' });
 const SHORT = new Intl.DateTimeFormat('fr-FR', { timeZone: 'UTC', day: 'numeric', month: 'short' });
@@ -468,6 +487,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   const [opts, setOpts] = useState<VOption[]>([]);
   const [vars, setVars] = useState<VRow[]>([]);
   const [varsDirty, setVarsDirty] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [editId, setEditId] = useState<string | null>(null);
   const [orderNo, setOrderNo] = useState<string | null>(null);
@@ -736,10 +758,24 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
     { title: 'Période', fields: [{ k: 'start', label: 'Début *', type: 'date' }, { k: 'end', label: 'Fin *', type: 'date' }, { k: 'active', label: 'Statut', options: ['Active', 'Inactive'], full: true }] },
   ];
 
+  const openImport = () => { setImportFile(null); setImportPreview(null); setImportResult(null); setDrawer('import'); };
+  const importForm = () => { const fd = new FormData(); fd.append('file', importFile!); return fd; };
+  const analyseImport = (file: File) => {
+    setImportFile(file); setImportPreview(null); setImportResult(null);
+    const fd = new FormData(); fd.append('file', file);
+    run(async () => setImportPreview((await api<{ data: ImportPreview }>('/admin/products/import/preview', { method: 'POST', body: fd })).data));
+  };
+  const runImport = () => run(async () => {
+    const r = (await api<{ data: ImportResult }>('/admin/products/import', { method: 'POST', body: importForm() })).data;
+    setImportResult(r);
+    await Promise.all([loadProducts(), loadCats()]);
+  }, 'Import terminé');
+
   const order = drawer === 'order' ? orders.find((o) => o.number === orderNo) : undefined;
   const drawerHead: [string, string] = drawer === 'product' ? [editId ? 'Modifier · ' + form.sku : 'Nouvelle montre', editId ? form.name : 'Ajouter une montre']
     : drawer === 'coupon' ? ['Code promo', editId ? form.code : 'Créer un coupon']
     : drawer === 'promo' ? ['Promotion automatique', editId ? form.name : 'Créer une promotion']
+    : drawer === 'import' ? ['Catalogue fournisseur', 'Importer des montres']
     : order ? [order.date, order.number] : ['', ''];
   const pv = Number(form.price) || 0, sv = Number(form.sale) || 0, hasPromo = sv > 0 && sv < pv;
 
@@ -874,6 +910,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
               <input className="adm-input" value={pq} onChange={(e) => setPq(e.target.value)} placeholder="Rechercher par nom, référence, SKU…" style={{ flex: 1, minWidth: 220, maxWidth: 420, height: 44, padding: '0 18px', border: '1px solid #D9D9D4', borderRadius: 999, background: '#fff', fontSize: 14, outline: 'none' }} />
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {['Tous', 'Actif', 'Brouillon', 'Archivé', 'Stock faible'].map((l) => <Chip key={l} h={44} active={pf === l} onClick={() => setPf(l)}>{l}</Chip>)}
+                <OutlineBtn onClick={openImport}>Importer un fichier</OutlineBtn>
               </div>
             </div>
             {tableWrap(1040, (() => {
@@ -885,7 +922,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                     const st = Number(p.stock);
                     return (
                       <div key={p.id} className="adm-row" style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '12px 20px', borderBottom: '1px solid #EDEDEA', transition: 'background .25s' }}>
-                        <span style={{ ...thumb, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ width: '55%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.18)' }} /></span>
+                        {p.images[0]
+                          ? <span style={{ ...thumb, width: 56, height: 56, backgroundImage: `url(${p.images[0].url})`, backgroundSize: 'cover', backgroundPosition: 'center' }} role="img" aria-label={p.name} />
+                          : <span style={{ ...thumb, width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ width: '55%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.18)' }} /></span>}
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}><span style={{ fontSize: 14, fontWeight: 600, textTransform: 'uppercase' }}>{p.name}</span><span style={{ fontFamily: 'var(--mono)', fontSize: 10.5, color: '#6B6B66' }}>{p.sku} · {p.collection}</span>
                           {p.variants.length > 0 && (
                             <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#6B6B66' }}>
@@ -1119,6 +1158,68 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {drawer === 'import' && (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 13.5, lineHeight: 1.6, color: '#3A3A36' }}>
+                <span style={monoLabel}>1 · Préparer le fichier</span>
+                <span>Un fichier <strong>CSV</strong> (Excel → Enregistrer sous → CSV), une ligne par montre. Colonnes obligatoires : <strong>nom</strong> et <strong>prix</strong> (en DH).
+                  Facultatives : prix_barre, stock, sku, categorie, marque, mouvement, couleurs (séparées par « | »), diametre, etancheite, bracelet, genre, statut, description, images (adresses https séparées par « | »).</span>
+                <span>Les montres sont créées <strong>en brouillon</strong> (sauf statut « Actif ») : vérifiez-les puis publiez-les. Importez uniquement des produits que vous avez le droit de vendre, avec des photos autorisées par votre fournisseur.</span>
+                <span><SmallBtn onClick={downloadTemplate}>Télécharger le modèle</SmallBtn></span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <span style={monoLabel}>2 · Choisir le fichier</span>
+                <label className="adm-small" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 72, border: '1px dashed #9A9A94', background: '#fff', cursor: busy ? 'wait' : 'pointer', fontSize: 13.5, color: '#55554F', padding: 12, textAlign: 'center' }}>
+                  {importFile ? <>📄 {importFile.name} · <u>changer</u></> : <>Cliquez pour choisir un fichier .csv</>}
+                  <input type="file" accept=".csv,text/csv,text/plain" disabled={busy} style={{ display: 'none' }}
+                    onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) analyseImport(f); }} />
+                </label>
+              </div>
+              {importPreview && !importResult && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={monoLabel}>3 · Vérifier</span>
+                  <span style={{ fontSize: 14 }}><strong>{importPreview.summary.valid}</strong> montre{importPreview.summary.valid > 1 ? 's' : ''} prête{importPreview.summary.valid > 1 ? 's' : ''} à importer
+                    {importPreview.summary.invalid > 0 && <> · <span style={{ color: DOT.red }}>{importPreview.summary.invalid} ligne{importPreview.summary.invalid > 1 ? 's' : ''} en erreur (ignorée{importPreview.summary.invalid > 1 ? 's' : ''})</span></>}</span>
+                  {importPreview.unknownColumns.length > 0 && <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Colonnes non utilisées : {importPreview.unknownColumns.join(', ')}</span>}
+                  <div style={{ ...card, maxHeight: 360, overflowY: 'auto' }}>
+                    {importPreview.reports.map((r) => (
+                      <div key={r.line} style={{ display: 'grid', gridTemplateColumns: '44px minmax(0,1fr) auto', gap: 10, padding: '9px 12px', borderBottom: '1px solid #EDEDEA', fontSize: 13, alignItems: 'start' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: '#6B6B66' }}>L{r.line}</span>
+                        <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                          <span style={{ fontWeight: 600 }}>{r.name}</span>
+                          {r.row && <span style={{ color: '#6B6B66', fontSize: 12 }}>{r.row.category} · {r.row.brand} · stock {r.row.stock}{r.row.colors.length ? ' · ' + r.row.colors.join(', ') : ''} · {r.row.images.length} photo{r.row.images.length > 1 ? 's' : ''}</span>}
+                          {r.errors.length > 0 && <span style={{ color: DOT.red, fontSize: 12 }}>{r.errors.join(' · ')}</span>}
+                          {r.warnings.length > 0 && <span style={{ color: 'oklch(0.55 0.12 75)', fontSize: 12 }}>{r.warnings.join(' · ')}</span>}
+                        </span>
+                        <span style={{ whiteSpace: 'nowrap', fontSize: 13 }}>{r.row ? fmt((r.row.salePriceCents ?? r.row.priceCents) / 100) : '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {importResult && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={monoLabel}>Résultat</span>
+                  <span style={{ fontSize: 14, lineHeight: 1.6 }}>
+                    <strong>{importResult.summary.created}</strong> montre(s) créée(s) en brouillon · {importResult.summary.images} photo(s)
+                    {importResult.summary.skipped > 0 && <> · {importResult.summary.skipped} déjà présente(s)</>}
+                    {importResult.summary.errors > 0 && <> · <span style={{ color: DOT.red }}>{importResult.summary.errors} en erreur</span></>}
+                  </span>
+                  {(importResult.summary.newCategories.length > 0 || importResult.summary.newBrands.length > 0) && (
+                    <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Créées automatiquement : {[...importResult.summary.newCategories.map((c) => 'catégorie ' + c), ...importResult.summary.newBrands.map((b) => 'marque ' + b)].join(', ')}</span>
+                  )}
+                  <div style={{ ...card, maxHeight: 320, overflowY: 'auto' }}>
+                    {importResult.results.filter((r) => r.status !== 'created' || r.message).map((r) => (
+                      <div key={r.line} style={{ padding: '8px 12px', borderBottom: '1px solid #EDEDEA', fontSize: 12.5 }}>
+                        <span style={{ fontFamily: 'var(--mono)', color: '#6B6B66' }}>L{r.line}</span> {r.name} — <span style={{ color: r.status === 'error' ? DOT.red : '#6B6B66' }}>{r.status === 'skipped' ? 'ignorée : ' : r.status === 'error' ? 'erreur : ' : ''}{r.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Les nouvelles montres sont dans la liste avec le statut « Brouillon » : relisez-les puis publiez-les.</span>
+                </div>
+              )}
+            </>
+          )}
           {drawer === 'product' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <span style={monoLabel}>Photos</span>
@@ -1257,8 +1358,13 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
         </div>
 
         <div style={{ padding: '16px 24px', borderTop: '1px solid #E4E4E0', background: '#fff', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button className="btn btn-outline" onClick={() => setDrawer(null)} style={{ height: 48 }}>{drawer === 'order' ? 'Fermer' : 'Annuler'}</button>
-          {drawer && drawer !== 'order' && <button className="btn btn-primary" onClick={save} style={{ height: 48 }}>{drawer === 'product' && !editId ? 'Ajouter au catalogue' : 'Enregistrer'}</button>}
+          <button className="btn btn-outline" onClick={() => setDrawer(null)} style={{ height: 48 }}>{drawer === 'order' || importResult ? 'Fermer' : 'Annuler'}</button>
+          {drawer === 'import' && importPreview && !importResult && importPreview.summary.valid > 0 && (
+            <button className="btn btn-primary" disabled={busy} onClick={runImport} style={{ height: 48, opacity: busy ? 0.6 : 1 }}>
+              {busy ? 'Import en cours…' : `Importer ${importPreview.summary.valid} montre${importPreview.summary.valid > 1 ? 's' : ''}`}
+            </button>
+          )}
+          {drawer && drawer !== 'order' && drawer !== 'import' && <button className="btn btn-primary" onClick={save} style={{ height: 48 }}>{drawer === 'product' && !editId ? 'Ajouter au catalogue' : 'Enregistrer'}</button>}
         </div>
       </aside>
 
