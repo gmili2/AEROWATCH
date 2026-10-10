@@ -63,6 +63,11 @@ ADMIN_PASSWORD="choisissez-un-mot-de-passe-solide"
 BANK_HOLDER="GMBIJOUX SARL"
 BANK_NAME="Nom de la banque"
 BANK_RIB="000 000 0000000000000000 00"
+
+# E-mails de commande (Resend, facultatif) : confirmation au client + alerte à la boutique
+RESEND_API_KEY="re_..."
+MAIL_FROM="GMBIJOUX <commandes@votre-domaine.ma>"
+ORDER_NOTIFY_EMAIL="vous@exemple.com"
 ```
 
 Pour `JWT_SECRET`, générez une chaîne aléatoire (sur votre Mac) : `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.

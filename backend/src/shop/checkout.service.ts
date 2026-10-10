@@ -7,6 +7,7 @@ import { AuthService } from '../auth/auth.service';
 import { PricingService } from '../catalog/pricing.service';
 import { AppError } from '../common/http';
 import { PrismaService } from '../prisma.service';
+import { OrderMail } from './order-mail';
 import { SiteAccess } from './site-access';
 import type { CheckoutDto, QuoteDto } from './checkout.controller';
 
@@ -25,7 +26,7 @@ const PROVIDER = { CASH_ON_DELIVERY: 'COD', BANK_TRANSFER: 'BANK_TRANSFER' } as 
  */
 @Injectable()
 export class CheckoutService {
-  constructor(private prisma: PrismaService, private pricing: PricingService, private config: ConfigService, private access: SiteAccess) {}
+  constructor(private prisma: PrismaService, private pricing: PricingService, private config: ConfigService, private access: SiteAccess, private orderMail: OrderMail) {}
 
   /** Méthodes de livraison actives pour un pays. */
   async shippingMethods(country: string) {
@@ -96,6 +97,8 @@ export class CheckoutService {
       }
       return created;
     }, { isolationLevel: 'ReadCommitted', timeout: 20_000 });
+    // Hors transaction et sans attendre : la commande est confirmée même si l'envoi échoue.
+    void this.orderMail.placed(order.id);
     return this.confirmation(order);
   }
 

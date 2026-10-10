@@ -13,6 +13,11 @@ const schema = z.object({
   UPLOAD_DIR: z.string().default('uploads'),
   // Boutique en accès privé : si défini, il faut ce code pour voir le catalogue et commander.
   SITE_ACCESS_CODE: z.string().min(6, 'SITE_ACCESS_CODE : 6 caractères minimum').optional(),
+  // E-mails de commande via Resend (facultatif : sans clé, rien n'est envoyé).
+  RESEND_API_KEY: z.string().optional(),
+  MAIL_FROM: z.string().default('GMBIJOUX <onboarding@resend.dev>'),
+  // Adresse(s) de la boutique prévenue(s) à chaque commande, séparées par des virgules.
+  ORDER_NOTIFY_EMAIL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

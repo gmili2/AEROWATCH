@@ -14,6 +14,8 @@ import { CheckoutController } from './shop/checkout.controller';
 import { SiteAccess, SiteAccessGuard } from './shop/site-access';
 import { SiteController } from './shop/site.controller';
 import { CheckoutService } from './shop/checkout.service';
+import { OrderMail } from './shop/order-mail';
+import { MailService } from './common/mail.service';
 import { Public } from './common/decorators';
 import { JwtAuthGuard, RolesGuard } from './common/guards';
 import { validateEnv } from './config';
@@ -54,6 +56,8 @@ class HealthController {
     AuthService,
     PricingService,
     CheckoutService,
+    MailService,
+    OrderMail,
     SiteAccess,
     SiteAccessGuard,
     // Ordre : limitation de débit, puis authentification, puis rôle.
