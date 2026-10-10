@@ -70,7 +70,13 @@ export type ShopCategory = { slug: string; name: string; description: string | n
 /** Catégorie en base correspondant à une carte de collection du site (« Nouveautés » n'en a pas). */
 export const CATEGORY_OF: Partial<Record<Tag, string>> = Object.fromEntries(Object.entries(CATEGORY_TAG).map(([slug, tag]) => [tag, slug]));
 
+/** Boutique en accès privé : code requis ? déjà saisi sur ce navigateur ? */
+export type SiteInfo = { private: boolean; unlocked: boolean };
+
 type Catalog = {
+  site: SiteInfo | null;
+  /** À appeler après la saisie du bon code d'accès. */
+  unlocked: () => void;
   products: Product[];
   categories: ShopCategory[];
   /** Image d'une carte de collection : celle de la catégorie, sinon la photo de la montre la plus récente concernée. */
@@ -85,6 +91,7 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [status, setStatus] = useState<Catalog['status']>('loading');
+  const [site, setSite] = useState<SiteInfo | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -103,7 +110,12 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    api<{ data: SiteInfo }>('/site').then((r) => setSite(r.data)).catch(() => setSite({ private: false, unlocked: true }));
+  }, []);
+  // Le catalogue n'est chargé qu'une fois l'accès accordé (le serveur le refuse sinon).
+  const allowed = !!site && (!site.private || site.unlocked);
+  useEffect(() => { if (allowed) load(); }, [allowed, load]);
 
   const value = useMemo<Catalog>(() => {
     const bySlug = new Map(products.map((p) => [p.id, p]));
@@ -113,8 +125,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return products.filter((p) => p.image && p.cats.includes(tag))
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))[0]?.image;
     };
-    return { products, categories, imageFor, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
-  }, [products, categories, status, load]);
+    return { site, unlocked: () => setSite((s) => (s ? { ...s, unlocked: true } : s)), products, categories, imageFor, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
+  }, [site, products, categories, status, load]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

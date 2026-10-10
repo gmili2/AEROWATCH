@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
+import { useCatalog } from './catalog';
+import { AccessGate } from './components/AccessGate';
 import { Footer, Header, Overlays, TopBar } from './components/Shell';
 import { useLayout, useReveal } from './layout';
 import Admin from './pages/Admin';
@@ -28,6 +30,7 @@ export default function App() {
   const L = useLayout();
   const { pathname } = useLocation();
   const { closeAll } = useStore();
+  const { site, unlocked } = useCatalog();
 
   useReveal(pathname);
   useEffect(() => {
@@ -40,6 +43,9 @@ export default function App() {
   }, [pathname, closeAll]);
 
   if (pathname.startsWith(PATHS.admin)) return <Admin />;
+  // Boutique en accès privé : rien n'est affiché avant la saisie du code.
+  if (!site) return <div style={{ minHeight: '100vh', background: 'var(--ivory)' }} />;
+  if (site.private && !site.unlocked) return <AccessGate onUnlock={unlocked} />;
 
   const isHome = pathname === '/';
   const isProduct = pathname.startsWith('/montre/');

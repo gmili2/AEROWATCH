@@ -7,6 +7,7 @@ import { AuthService } from '../auth/auth.service';
 import { PricingService } from '../catalog/pricing.service';
 import { AppError } from '../common/http';
 import { PrismaService } from '../prisma.service';
+import { SiteAccess } from './site-access';
 import type { CheckoutDto, QuoteDto } from './checkout.controller';
 
 type Db = Prisma.TransactionClient | PrismaService;
@@ -24,7 +25,7 @@ const PROVIDER = { CASH_ON_DELIVERY: 'COD', BANK_TRANSFER: 'BANK_TRANSFER' } as 
  */
 @Injectable()
 export class CheckoutService {
-  constructor(private prisma: PrismaService, private pricing: PricingService, private config: ConfigService) {}
+  constructor(private prisma: PrismaService, private pricing: PricingService, private config: ConfigService, private access: SiteAccess) {}
 
   /** Méthodes de livraison actives pour un pays. */
   async shippingMethods(country: string) {
@@ -129,7 +130,8 @@ export class CheckoutService {
       const p = products.find((x) => x.slug === w.slug);
       if (!p) { problems.push({ slug: w.slug, variantId: w.variantId, reason: 'UNAVAILABLE' }); continue; }
       // Montre présentée en vitrine : jamais commandable, quel que soit son stock.
-      if (!p.purchasable) { problems.push({ slug: w.slug, variantId: w.variantId, reason: 'NOT_FOR_SALE' }); continue; }
+      // En accès privé (boutique réservée), toutes les montres sont commandables.
+      if (!p.purchasable && !this.access.enabled) { problems.push({ slug: w.slug, variantId: w.variantId, reason: 'NOT_FOR_SALE' }); continue; }
       // Stock relu après verrouillage.
       const fresh = lock ? await db.product.findUniqueOrThrow({ where: { id: p.id }, select: { stock: true } }) : p;
       const active = p.variants.filter((v) => v.isActive);

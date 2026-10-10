@@ -11,6 +11,8 @@ import { PricingService } from './catalog/pricing.service';
 import { AuditModule } from './common/audit.service';
 import { UploadsModule } from './common/uploads.service';
 import { CheckoutController } from './shop/checkout.controller';
+import { SiteAccess, SiteAccessGuard } from './shop/site-access';
+import { SiteController } from './shop/site.controller';
 import { CheckoutService } from './shop/checkout.service';
 import { Public } from './common/decorators';
 import { JwtAuthGuard, RolesGuard } from './common/guards';
@@ -47,11 +49,13 @@ class HealthController {
     UploadsModule,
     AdminModule,
   ],
-  controllers: [HealthController, AuthController, CatalogController, CheckoutController],
+  controllers: [HealthController, AuthController, CatalogController, CheckoutController, SiteController],
   providers: [
     AuthService,
     PricingService,
     CheckoutService,
+    SiteAccess,
+    SiteAccessGuard,
     // Ordre : limitation de débit, puis authentification, puis rôle.
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { Gender, MovementType, Prisma } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
@@ -7,6 +7,7 @@ import { Public } from '../common/decorators';
 import { AppError, PageQuery, paged, skipTake } from '../common/http';
 import { PrismaService } from '../prisma.service';
 import { variantInclude, variantValues } from '../admin/variants';
+import { SiteAccess, SiteAccessGuard } from '../shop/site-access';
 import { PricingService } from './pricing.service';
 
 const bool = () => Transform(({ value }) => value === true || value === 'true' || value === '1');
@@ -43,8 +44,9 @@ type ProductRow = Prisma.ProductGetPayload<{ include: typeof include }>;
 @Public()
 @Controller()
 export class CatalogController {
-  constructor(private prisma: PrismaService, private pricing: PricingService) {}
+  constructor(private prisma: PrismaService, private pricing: PricingService, private access: SiteAccess) {}
 
+  @UseGuards(SiteAccessGuard)
   @Get('products')
   async products(@Query() q: ProductQuery) {
     const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
@@ -89,6 +91,7 @@ export class CatalogController {
     return paged(items.slice(skip, skip + take), items.length, q);
   }
 
+  @UseGuards(SiteAccessGuard)
   @Get('products/:slug')
   async product(@Param('slug') slug: string) {
     const p = await this.prisma.product.findFirst({ where: { slug, status: 'ACTIVE' }, include });
@@ -141,7 +144,7 @@ export class CatalogController {
       priceFromCents: finals.length ? Math.min(...finals) : base.finalPriceCents,
       hasPriceRange: finals.length > 1 && Math.min(...finals) !== Math.max(...finals),
       inStock: p.stock > 0, lowStock: p.stock > 0 && p.stock <= p.lowStockThreshold, stock: p.stock <= p.lowStockThreshold ? p.stock : null,
-      isFeatured: p.isFeatured, purchasable: p.purchasable, gender: p.gender, brand: p.brand, category: p.category, collection: p.collection,
+      isFeatured: p.isFeatured, purchasable: p.purchasable || this.access.enabled, gender: p.gender, brand: p.brand, category: p.category, collection: p.collection,
       movementType: p.movementType, caliber: p.caliber, caseMaterial: p.caseMaterial, strapMaterial: p.strapMaterial,
       color: p.color, dialColor: p.dialColor, diameterMm: Number(p.diameterMm), thicknessMm: p.thicknessMm == null ? null : Number(p.thicknessMm),
       lugWidthMm: p.lugWidthMm, waterResistanceM: p.waterResistanceM, glass: p.glass, powerReserveHours: p.powerReserveHours,

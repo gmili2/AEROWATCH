@@ -11,6 +11,8 @@ const schema = z.object({
   BANK_NAME: z.string().optional(),
   BANK_RIB: z.string().optional(),
   UPLOAD_DIR: z.string().default('uploads'),
+  // Boutique en accès privé : si défini, il faut ce code pour voir le catalogue et commander.
+  SITE_ACCESS_CODE: z.string().min(6, 'SITE_ACCESS_CODE : 6 caractères minimum').optional(),
 });
 
 export type Env = z.infer<typeof schema>;

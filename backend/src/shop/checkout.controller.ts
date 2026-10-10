@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, Post, Query, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { PaymentMethod } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
@@ -7,6 +7,7 @@ import {
 } from 'class-validator';
 import { Public } from '../common/decorators';
 import { CheckoutService } from './checkout.service';
+import { SiteAccessGuard } from './site-access';
 
 const trim = () => Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
 export const COUNTRIES = ['MA'];
@@ -46,6 +47,7 @@ export class CheckoutDto extends QuoteDto {
 }
 
 @Public()
+@UseGuards(SiteAccessGuard)
 @Controller()
 export class CheckoutController {
   constructor(private checkout: CheckoutService) {}
