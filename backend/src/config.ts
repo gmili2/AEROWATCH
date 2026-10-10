@@ -11,9 +11,6 @@ const schema = z.object({
   BANK_NAME: z.string().optional(),
   BANK_RIB: z.string().optional(),
   UPLOAD_DIR: z.string().default('uploads'),
-  // Démonstration (projet d'études) : bandeau, commande désactivée, code d'accès au site.
-  DEMO_MODE: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
-  DEMO_ACCESS_CODE: z.string().optional(),
 });
 
 export type Env = z.infer<typeof schema>;

@@ -11,7 +11,6 @@ import { PricingService } from './catalog/pricing.service';
 import { AuditModule } from './common/audit.service';
 import { UploadsModule } from './common/uploads.service';
 import { CheckoutController } from './shop/checkout.controller';
-import { SiteController } from './shop/site.controller';
 import { CheckoutService } from './shop/checkout.service';
 import { Public } from './common/decorators';
 import { JwtAuthGuard, RolesGuard } from './common/guards';
@@ -48,7 +47,7 @@ class HealthController {
     UploadsModule,
     AdminModule,
   ],
-  controllers: [HealthController, AuthController, CatalogController, CheckoutController, SiteController],
+  controllers: [HealthController, AuthController, CatalogController, CheckoutController],
   providers: [
     AuthService,
     PricingService,

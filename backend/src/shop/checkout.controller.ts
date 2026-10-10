@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Body, Controller, Get, Headers, HttpCode, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { PaymentMethod } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
@@ -7,7 +6,6 @@ import {
   ArrayMaxSize, ArrayMinSize, IsArray, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateNested,
 } from 'class-validator';
 import { Public } from '../common/decorators';
-import { AppError } from '../common/http';
 import { CheckoutService } from './checkout.service';
 
 const trim = () => Transform(({ value }) => (typeof value === 'string' ? value.trim() : value));
@@ -50,7 +48,7 @@ export class CheckoutDto extends QuoteDto {
 @Public()
 @Controller()
 export class CheckoutController {
-  constructor(private checkout: CheckoutService, private config: ConfigService) {}
+  constructor(private checkout: CheckoutService) {}
 
   @Get('shipping/methods')
   async methods(@Query('country') country = 'MA') {
@@ -67,9 +65,6 @@ export class CheckoutController {
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('orders')
   async create(@Body() dto: CheckoutDto, @Headers('idempotency-key') key?: string) {
-    if (this.config.get<boolean>('DEMO_MODE')) {
-      throw new AppError(HttpStatus.FORBIDDEN, 'DEMO_MODE', 'Site de démonstration : la commande est désactivée.');
-    }
     const idem = key && /^[\w-]{8,64}$/.test(key) ? key : undefined;
     dto.country = dto.address.country;
     return { data: await this.checkout.create(dto, idem) };

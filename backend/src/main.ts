@@ -27,8 +27,6 @@ async function bootstrap() {
   app.enableCors({ origin: env.FRONTEND_URL, credentials: true });
   // Images envoyées depuis l'admin (noms aléatoires, jamais réécrits : cache long).
   app.useStaticAssets(app.get(UploadsService).root, { prefix: UPLOADS_URL + '/', maxAge: '30d', immutable: true, index: false, dotfiles: 'deny' });
-  // En démonstration, l'API demande aux moteurs de recherche de ne rien indexer.
-  if (env.DEMO_MODE) app.use((_req: Request, res: Response, next: NextFunction) => { res.setHeader('X-Robots-Tag', 'noindex, nofollow'); next(); });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new AllExceptionsFilter());

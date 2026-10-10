@@ -36,14 +36,6 @@ export function Logo({ size, light }: { size: number; light?: boolean }) {
 
 export function TopBar() {
   const L = useLayout();
-  const { site } = useCatalog();
-  if (site?.demo) {
-    return (
-      <div role="note" style={{ background: 'oklch(0.72 0.13 75)', color: '#111', padding: '10px 20px', textAlign: 'center', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', lineHeight: 1.5 }}>
-        Site de démonstration · projet de fin d’études · aucune vente
-      </div>
-    );
-  }
   return (
     <div style={{ background: '#111', color: '#fff', padding: '10px 20px', display: 'flex', justifyContent: 'center', gap: 24, fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.14em', textTransform: 'uppercase' }}>
       <span>Livraison incluse</span>
