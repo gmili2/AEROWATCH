@@ -20,12 +20,14 @@ const HERO_SPECS = [
 
 function HeroNoir({ L }: { L: Layout }) {
   const navigate = useNavigate();
-  const hero = useCatalog().find('nocturne');
+  // Montre mise en avant : la première commandable avec une photo (sinon la première du catalogue).
+  const { products } = useCatalog();
+  const hero = products.find((p) => p.purchasable && p.image) ?? products.find((p) => p.image) ?? products[0];
   return (
     <section style={{ background: '#111', color: '#fff' }}>
       <div style={{ display: 'grid', gridTemplateColumns: L.split, gap: L.heroGap, alignItems: 'center', padding: `${L.heroPad} ${L.px}` }}>
         <div data-reveal style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
-          <span className="mono" style={{ letterSpacing: '.18em', color: '#B5B5AF' }}>Collection Nocturne — 2026</span>
+          <span className="mono" style={{ letterSpacing: '.18em', color: '#B5B5AF' }}>{hero?.col ? `Collection ${hero.col} — 2026` : 'Collection 2026'}</span>
           <h1 className="display" style={{ letterSpacing: '-.015em', lineHeight: 0.98, fontSize: L.h1 }}>Le temps, taillé comme une pierre.</h1>
           <p style={{ margin: 0, fontSize: 17, lineHeight: 1.6, color: '#CFCFCA', maxWidth: 440, textWrap: 'pretty' }}>
             Montres automatiques et classiques, choisies et contrôlées une à une. Garanties deux ans, livrées assurées.
@@ -37,16 +39,19 @@ function HeroNoir({ L }: { L: Layout }) {
         </div>
         <div data-reveal style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
           <button
-            className="ph ph-dark" onClick={() => navigate(productPath('nocturne'))} aria-label="Voir la Nocturne 40"
-            style={{ width: '100%', maxWidth: 580, aspectRatio: '1', borderRadius: '50%', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            className="ph ph-dark" onClick={() => navigate(hero ? productPath(hero.id) : shopPath('all'))} aria-label={hero ? `Voir la ${hero.name}` : 'Voir les montres'}
+            style={{ width: '100%', maxWidth: 580, aspectRatio: '1', borderRadius: '50%', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', padding: 0 }}
           >
-            <Dial size="58%" dark />
-            <span className="ph-caption" style={{ left: 0, right: 0, bottom: '18%', color: '#8C8C86' }}>photo produit · Nocturne 40</span>
+            {hero?.image
+              ? <img src={hero.image} alt={hero.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <Dial size="58%" dark />}
           </button>
           <div style={{ position: 'absolute', right: 0, bottom: '6%', background: 'var(--ivory)', color: '#111', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 190 }}>
-            <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em' }}>Réf. GM-NOC-40</span>
-            <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, textTransform: 'uppercase' }}>Nocturne 40</span>
-            {hero && <span style={{ fontSize: 14 }}>{hero.hasRange ? 'dès ' : ''}{fmt(hero.price)}</span>}
+            {hero && <>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em' }}>Réf. {hero.sku}</span>
+              <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, textTransform: 'uppercase' }}>{hero.name}</span>
+              <span style={{ fontSize: 14 }}>{hero.hasRange ? 'dès ' : ''}{fmt(hero.price)}</span>
+            </>}
           </div>
         </div>
       </div>
