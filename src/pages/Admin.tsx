@@ -52,7 +52,7 @@ type ApiProduct = {
   strapMaterial: string; color: string; diameterMm: number; waterResistanceM: number; glass: string; powerReserveHours: number | null;
   warrantyMonths: number; soldCount: number; images: ProductImage[];
   options: { id: string; name: string; values: { id: string; label: string; colorHex: string | null }[] }[];
-  variants: { id: string; sku: string; priceCents: number | null; salePriceCents: number | null; stock: number; isActive: boolean; values: { label: string; colorHex: string | null }[] }[];
+  variants: { id: string; sku: string; priceCents: number | null; salePriceCents: number | null; stock: number; isActive: boolean; imageUrl: string | null; values: { label: string; colorHex: string | null }[] }[];
 };
 type ApiHistory = { from: OrderStatus | null; to: OrderStatus; note: string | null; createdAt: string; actor: string };
 type ApiOrder = {
@@ -83,7 +83,7 @@ type AProduct = {
 /** Option en cours d'édition (Couleur, Bracelet…) ; `color` affiche des pastilles. */
 type VOption = { name: string; color: boolean; values: { label: string; hex: string }[] };
 /** Déclinaison en cours d'édition ; prix vides = prix du produit. */
-type VRow = { id?: string; values: string[]; sku: string; price: string; sale: string; stock: string; active: boolean };
+type VRow = { id?: string; values: string[]; sku: string; price: string; sale: string; stock: string; active: boolean; image: string };
 type HistoryItem = { label: string; at: string; by: string };
 type AOrder = {
   id: string; number: string; customer: string; email: string; date: string; lines: { id: string; name: string; variant: string | null; qty: number; unit: number }[];
@@ -106,7 +106,7 @@ const toProduct = (p: ApiProduct): AProduct => ({
     name: o.name, color: o.values.some((v) => v.colorHex), values: o.values.map((v) => ({ label: v.label, hex: v.colorHex ?? '#111111' })),
   })),
   variants: p.variants.map((v) => ({
-    id: v.id, values: v.values.map((x) => x.label), sku: v.sku, price: euros(v.priceCents), sale: euros(v.salePriceCents), stock: String(v.stock), active: v.isActive,
+    id: v.id, values: v.values.map((x) => x.label), sku: v.sku, price: euros(v.priceCents), sale: euros(v.salePriceCents), stock: String(v.stock), active: v.isActive, image: v.imageUrl ?? '',
   })),
 });
 
@@ -262,12 +262,25 @@ function combine(opts: VOption[], prev: VRow[], baseSku: string): VRow[] {
     const hit = exact.get(comboKey(vals));
     const old = hit && !used.has(hit) ? hit : prev.find((r) => !used.has(r) && r.values.every((x) => lower.includes(x.toLocaleLowerCase('fr'))));
     if (old) { used.add(old); return { ...old, values: vals }; }
-    return { values: vals, sku: [baseSku.trim().toUpperCase() || 'SKU', ...vals.map(code)].join('-'), price: '', sale: '', stock: '0', active: true };
+    return { values: vals, sku: [baseSku.trim().toUpperCase() || 'SKU', ...vals.map(code)].join('-'), price: '', sale: '', stock: '0', active: true, image: '' };
   });
 }
 
-function VariantsEditor({ opts, vars, baseSku, basePrice, onChange }: {
-  opts: VOption[]; vars: VRow[]; baseSku: string; basePrice: string; onChange: (o: VOption[], v: VRow[]) => void;
+/** Choix de la photo d'une déclinaison parmi les photos de la montre (clic = photo suivante). */
+function PhotoPick({ value, photos, onChange }: { value: string; photos: string[]; onChange: (v: string) => void }) {
+  if (!photos.length) return <span title="Ajoutez d’abord des photos à la montre" style={{ fontSize: 11, color: '#9A9A94' }}>—</span>;
+  const i = photos.indexOf(value);
+  const next = () => onChange(i + 1 < photos.length ? photos[i + 1] : '');
+  return (
+    <button type="button" onClick={next} title={i >= 0 ? `Photo ${i + 1} (cliquer pour changer)` : 'Aucune photo (cliquer pour en choisir une)'}
+      style={{ width: 40, height: 40, padding: 0, border: '1px solid #D9D9D4', background: value ? `#EEEEEB url(${value}) center/cover` : '#fff', cursor: 'pointer', fontSize: 10, color: '#6B6B66' }}>
+      {value ? '' : 'auto'}
+    </button>
+  );
+}
+
+function VariantsEditor({ opts, vars, baseSku, basePrice, photos, onChange }: {
+  opts: VOption[]; vars: VRow[]; baseSku: string; basePrice: string; photos: string[]; onChange: (o: VOption[], v: VRow[]) => void;
 }) {
   const [draft, setDraft] = useState<Record<number, string>>({});
   const [custom, setCustom] = useState('');
@@ -351,15 +364,16 @@ function VariantsEditor({ opts, vars, baseSku, basePrice, onChange }: {
       {vars.length > 0 && (
         <div style={{ ...card, overflowX: 'auto' }}>
           <div style={{ minWidth: 540 }}>
-            <div style={{ ...thRow('minmax(120px,1.2fr) minmax(150px,1.5fr) 76px 76px 60px 40px'), padding: '10px 12px', gap: 8 }}>
-              <span>Déclinaison</span><span>SKU</span><span>Prix DH</span><span>Promo DH</span><span>Stock</span><span>Actif</span>
+            <div style={{ ...thRow('minmax(120px,1.2fr) 52px minmax(130px,1.4fr) 72px 72px 56px 36px'), padding: '10px 12px', gap: 8 }}>
+              <span>Déclinaison</span><span>Photo</span><span>SKU</span><span>Prix DH</span><span>Promo DH</span><span>Stock</span><span>Actif</span>
             </div>
             {vars.map((r, k) => (
-              <div key={comboKey(r.values)} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px,1.2fr) minmax(150px,1.5fr) 76px 76px 60px 40px', gap: 8, alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid #EDEDEA', opacity: r.active ? 1 : 0.5 }}>
+              <div key={comboKey(r.values)} style={{ display: 'grid', gridTemplateColumns: 'minmax(120px,1.2fr) 52px minmax(130px,1.4fr) 72px 72px 56px 36px', gap: 8, alignItems: 'center', padding: '8px 12px', borderBottom: '1px solid #EDEDEA', opacity: r.active ? 1 : 0.5 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, minWidth: 0 }}>
                   {r.values.map((v) => hexOf(v)).filter(Boolean).slice(0, 1).map((h) => <Dot key={h} c={h!} size={12} />)}
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.values.join(' · ')}</span>
                 </span>
+                <PhotoPick value={r.image} photos={photos} onChange={(image) => setRow(k, { image })} />
                 <input className="adm-input" value={r.sku} onChange={(e) => setRow(k, { sku: e.target.value.toUpperCase() })} style={{ ...small, fontFamily: 'var(--mono)', fontSize: 12 }} />
                 <input className="adm-input" type="number" value={r.price} placeholder={basePrice || '—'} onChange={(e) => setRow(k, { price: e.target.value })} style={small} />
                 <input className="adm-input" type="number" value={r.sale} placeholder="—" onChange={(e) => setRow(k, { sale: e.target.value })} style={small} />
@@ -676,7 +690,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
           options: opts.map((o) => ({ name: o.name.trim(), values: o.values.map((v) => ({ label: v.label, colorHex: o.color ? v.hex : null })) })),
           variants: vars.map((r) => ({
             id: r.id, values: r.values, sku: r.sku, priceCents: r.price ? cents(r.price) : null, salePriceCents: r.sale ? cents(r.sale) : null,
-            stock: Number(r.stock), isActive: r.active,
+            stock: Number(r.stock), isActive: r.active, imageUrl: r.image || null,
           })),
         };
         const saveVariants = (id: string) => api<{ data: ApiProduct }>(`/admin/products/${id}/variants`, { method: 'PUT', body: variantsBody });
@@ -1284,7 +1298,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
           ))}
 
           {drawer === 'product' && (
-            <VariantsEditor opts={opts} vars={vars} baseSku={form.sku ?? ''} basePrice={form.price ?? ''}
+            <VariantsEditor opts={opts} vars={vars} baseSku={form.sku ?? ''} basePrice={form.price ?? ''} photos={images.map((i) => i.url)}
               onChange={(o, v) => { setOpts(o); setVars(v); setVarsDirty(true); setErrors((e) => ({ ...e, variants: '' })); }} />
           )}
 

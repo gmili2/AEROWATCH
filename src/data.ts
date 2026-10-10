@@ -13,6 +13,7 @@ export interface Variant {
   old: number | null;
   inStock: boolean;
   lowStock: boolean;
+  imageUrl: string | null; // photo propre à cette déclinaison (couleur)
 }
 
 /** Montre telle qu'affichée en boutique (chargée depuis l'API, voir catalog.tsx). */

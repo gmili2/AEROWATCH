@@ -5,7 +5,7 @@ import type { CategoryId, Product, Swatch, Variant } from './data';
 /* Catalogue de la boutique, chargé une fois depuis l'API (montres publiées uniquement). */
 
 type ApiSwatch = { id: string; label: string; colorHex: string | null };
-type ApiVariant = { id: string; sku: string; values: ApiSwatch[]; priceCents: number; finalPriceCents: number; onSale: boolean; inStock: boolean; lowStock: boolean };
+type ApiVariant = { id: string; sku: string; values: ApiSwatch[]; priceCents: number; finalPriceCents: number; onSale: boolean; inStock: boolean; lowStock: boolean; imageUrl: string | null };
 export type ApiShopProduct = {
   slug: string; sku: string; name: string; shortDescription: string | null; description: string;
   priceCents: number; finalPriceCents: number; onSale: boolean; priceFromCents: number; hasPriceRange: boolean;
@@ -46,7 +46,7 @@ export function toShopProduct(p: ApiShopProduct): Product {
   const x = p.extraSpecs ?? {};
   const variants: Variant[] = p.variants.map((v) => ({
     id: v.id, sku: v.sku, values: v.values.map(swatch), price: euros(v.finalPriceCents), old: v.onSale ? euros(v.priceCents) : null,
-    inStock: v.inStock, lowStock: v.lowStock,
+    inStock: v.inStock, lowStock: v.lowStock, imageUrl: v.imageUrl,
   }));
   // Prix affiché sur les cartes : la déclinaison la moins chère (avec son prix barré éventuel).
   const cheapest = variants.length ? variants.reduce((a, b) => (b.price < a.price ? b : a)) : null;

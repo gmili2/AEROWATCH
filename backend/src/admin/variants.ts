@@ -2,7 +2,7 @@ import { HttpStatus } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
-  ArrayMaxSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, IsUUID, IsUrl, Matches, Max, MaxLength, Min, MinLength, ValidateNested,
+  ArrayMaxSize, IsArray, IsBoolean, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateNested,
 } from 'class-validator';
 import { AppError } from '../common/http';
 
@@ -25,7 +25,8 @@ export class VariantDto {
   @IsOptional() @IsInt() @Min(1) salePriceCents?: number | null;
   @IsInt() @Min(0) @Max(100_000) stock: number;
   @IsOptional() @IsBoolean() isActive?: boolean;
-  @IsOptional() @IsUrl({ protocols: ['https'], require_protocol: true }) imageUrl?: string | null;
+  /** Photo de la déclinaison : une photo du site (/api/uploads/…, /fichier.jpg) ou une adresse https. */
+  @IsOptional() @MaxLength(500) @Matches(/^(https:\/\/\S+|\/[\w./-]+\.(jpe?g|png|webp))$/i, { message: 'Photo de déclinaison invalide' }) imageUrl?: string | null;
 }
 export class VariantsDto {
   @IsArray() @ArrayMaxSize(3) @ValidateNested({ each: true }) @Type(() => OptionDto) options: OptionDto[];

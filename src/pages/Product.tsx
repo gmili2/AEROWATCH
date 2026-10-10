@@ -33,7 +33,8 @@ export default function Product() {
   const catalog = useCatalog();
   const p = catalog.find(id);
   const { add } = useStore();
-  const [img, setImg] = useState(0);
+  // Photo affichée : index choisi à la main, ou -1 = suivre la photo de la couleur sélectionnée.
+  const [img, setImg] = useState(-1);
   const [zoom, setZoom] = useState(false);
   const [zxy, setZxy] = useState({ x: 50, y: 50 });
   const [qty, setQty] = useState(1);
@@ -41,7 +42,7 @@ export default function Product() {
   const [choice, setChoice] = useState<{ id: string; sel: Record<string, string> }>({ id: '', sel: {} });
   const [reviews, setReviews] = useState<{ id: string; list: Review[] }>({ id: '', list: [] });
 
-  useEffect(() => { setImg(0); setZoom(false); setQty(1); }, [id]);
+  useEffect(() => { setImg(-1); setZoom(false); setQty(1); }, [id]);
   useEffect(() => { if (p) document.title = `${p.name} — GMBIJOUX`; }, [p]);
   useEffect(() => {
     let live = true;
@@ -75,6 +76,8 @@ export default function Product() {
       if (alt) next = Object.fromEntries((p.options ?? []).map((o, k) => [o.name, alt.values[k].label]));
     }
     setChoice({ id: p.id, sel: next });
+    setImg(-1); // la grande photo suit la nouvelle couleur
+    setZoom(false);
   };
   const variant = p.variants.find((v) => matches(p, v, sel));
   /** Une valeur est disponible si, combinée aux autres choix actuels, elle donne une déclinaison en stock. */
@@ -84,7 +87,9 @@ export default function Product() {
   const canBuy = p.purchasable && (p.variants.length ? !!variant?.inStock : p.inStock);
   const stockText = !p.purchasable ? 'Pièce présentée en vitrine' : !p.variants.length ? p.stock : !variant ? 'Combinaison indisponible' : !variant.inStock ? 'Épuisé dans cette version' : variant.lowStock ? 'Dernières pièces disponibles' : 'En stock — expédiée sous 24 h';
   const photos = p.photos.length ? p.photos : p.image ? [p.image] : [];
-  const mainPhoto = photos[Math.min(img, Math.max(0, photos.length - 1))];
+  const variantPhoto = variant?.imageUrl ? photos.indexOf(variant.imageUrl) : -1;
+  const shown = img >= 0 ? Math.min(img, photos.length - 1) : Math.max(0, variantPhoto);
+  const mainPhoto = variant?.imageUrl && img < 0 && variantPhoto < 0 ? variant.imageUrl : photos[shown];
   const ref = variant?.sku ?? p.sku;
   const buy = () => { if (canBuy) add(p.id, qty, variant?.id); };
 
@@ -122,7 +127,7 @@ export default function Product() {
                     </div>
                 }
               </div>
-              <span className="ph-caption">photo · {p.name}{variant ? ' ' + variant.values.map((v) => v.label).join(' · ') : ''} — {photos.length ? `${img + 1} / ${photos.length}` : VIEWS[img]}</span>
+              <span className="ph-caption">photo · {p.name}{variant ? ' ' + variant.values.map((v) => v.label).join(' · ') : ''} — {photos.length ? `${shown + 1} / ${photos.length}` : VIEWS[Math.max(0, img)]}</span>
               <span style={{ position: 'absolute', right: 14, top: 14, padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,.9)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase' }}>
                 {zoom ? 'Zoom × 2,2' : 'Cliquer pour zoomer'}
               </span>
@@ -130,8 +135,8 @@ export default function Product() {
             {photos.length > 1 ? (
               <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(photos.length, 6)},minmax(0,1fr))`, gap: 10 }}>
                 {photos.slice(0, 6).map((src, i) => (
-                  <button key={src} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Photo ${i + 1}`} aria-pressed={i === img}
-                    style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: 'none', background: '#f5f4f1', border: `1px solid ${i === img ? '#111' : 'transparent'}`, overflow: 'hidden', position: 'relative' }}>
+                  <button key={src} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Photo ${i + 1}`} aria-pressed={i === shown}
+                    style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: 'none', background: '#f5f4f1', border: `1px solid ${i === shown ? '#111' : 'transparent'}`, overflow: 'hidden', position: 'relative' }}>
                     <img src={src} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
                   </button>
                 ))}
@@ -140,8 +145,8 @@ export default function Product() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: 10 }}>
               {VIEWS.map((v, i) => (
                 <button
-                  key={v} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Vue ${v}`} aria-pressed={i === img}
-                  style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: p.image ? 'none' : 'repeating-linear-gradient(135deg,rgba(17,17,17,.045) 0 1px,transparent 1px 9px)', background: p.image && i === 0 ? '#f5f4f1' : undefined, border: `1px solid ${i === img ? '#111' : 'transparent'}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', overflow: 'hidden', position: 'relative' }}
+                  key={v} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Vue ${v}`} aria-pressed={i === shown}
+                  style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: p.image ? 'none' : 'repeating-linear-gradient(135deg,rgba(17,17,17,.045) 0 1px,transparent 1px 9px)', background: p.image && i === 0 ? '#f5f4f1' : undefined, border: `1px solid ${i === shown ? '#111' : 'transparent'}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', overflow: 'hidden', position: 'relative' }}
                 >
                   {p.image && i === 0 && <img src={p.image} alt={v} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />}
                   <span style={{ position: 'relative', zIndex: 1, padding: 8, fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: p.image ? 'rgba(17,17,17,.7)' : 'var(--graphite)', textAlign: 'left' }}>{v}</span>
