@@ -67,7 +67,10 @@ export type ShopCategory = { slug: string; name: string; description: string | n
 /** Catégorie en base correspondant à une carte de collection du site (« Nouveautés » n'en a pas). */
 export const CATEGORY_OF: Partial<Record<Tag, string>> = Object.fromEntries(Object.entries(CATEGORY_TAG).map(([slug, tag]) => [tag, slug]));
 
+export type SiteInfo = { demo: boolean; accessCodeRequired: boolean };
+
 type Catalog = {
+  site: SiteInfo | null;
   products: Product[];
   categories: ShopCategory[];
   /** Image d'une carte de collection : celle de la catégorie, sinon la photo de la montre la plus récente concernée. */
@@ -82,6 +85,16 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<ShopCategory[]>([]);
   const [status, setStatus] = useState<Catalog['status']>('loading');
+  const [site, setSite] = useState<SiteInfo | null>(null);
+
+  useEffect(() => {
+    api<{ data: SiteInfo }>('/site').then((r) => setSite(r.data)).catch(() => setSite({ demo: false, accessCodeRequired: false }));
+  }, []);
+  // Site de démonstration : pas d'indexation par les moteurs de recherche.
+  useEffect(() => {
+    if (!site?.demo || document.querySelector('meta[name="robots"]')) return;
+    document.head.append(Object.assign(document.createElement('meta'), { name: 'robots', content: 'noindex, nofollow' }));
+  }, [site]);
 
   const load = useCallback(async () => {
     try {
@@ -110,8 +123,8 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return products.filter((p) => p.image && p.cats.includes(tag))
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))[0]?.image;
     };
-    return { products, categories, imageFor, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
-  }, [products, categories, status, load]);
+    return { site, products, categories, imageFor, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
+  }, [site, products, categories, status, load]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

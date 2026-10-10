@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
+import { useCatalog } from './catalog';
+import { DemoGate, hasDemoAccess } from './components/DemoGate';
 import { Footer, Header, Overlays, TopBar } from './components/Shell';
 import { useLayout, useReveal } from './layout';
 import Admin from './pages/Admin';
@@ -28,6 +30,8 @@ export default function App() {
   const L = useLayout();
   const { pathname } = useLocation();
   const { closeAll } = useStore();
+  const { site } = useCatalog();
+  const [unlocked, setUnlocked] = useState(hasDemoAccess);
 
   useReveal(pathname);
   useEffect(() => {
@@ -40,6 +44,9 @@ export default function App() {
   }, [pathname, closeAll]);
 
   if (pathname.startsWith(PATHS.admin)) return <Admin />;
+  // Démonstration protégée par un code : rien n'est affiché avant la vérification.
+  if (!site) return <div style={{ minHeight: '100vh', background: 'var(--ivory)' }} />;
+  if (site.accessCodeRequired && !unlocked) return <DemoGate onUnlock={() => setUnlocked(true)} />;
 
   const isHome = pathname === '/';
   const isProduct = pathname.startsWith('/montre/');

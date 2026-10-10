@@ -137,7 +137,8 @@ export function Checkout() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Confirmation | null>(null);
   const [idemKey, setIdemKey] = useState(newKey);
-  const { status } = useCatalog();
+  const { status, site } = useCatalog();
+  const demo = !!site?.demo;
 
   useEffect(() => { window.scrollTo({ top: 0 }); }, [step]);
 
@@ -285,8 +286,8 @@ export function Checkout() {
               )}
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <button type="button" className="btn btn-outline btn-tall" style={{ padding: '0 26px' }} onClick={() => setStep(1)}>Retour</button>
-                <button type="submit" disabled={busy || !quote} className="btn btn-primary btn-tall" style={{ flex: 1, minWidth: 200, opacity: busy || !quote ? 0.5 : 1 }}>
-                  {busy ? 'Enregistrement…' : `Valider la commande · ${fmt(total)}`}
+                <button type="submit" disabled={busy || !quote || demo} className="btn btn-primary btn-tall" style={{ flex: 1, minWidth: 200, opacity: busy || !quote || demo ? 0.5 : 1 }}>
+                  {demo ? 'Commande désactivée (démonstration)' : busy ? 'Enregistrement…' : `Valider la commande · ${fmt(total)}`}
                 </button>
               </div>
             </form>
