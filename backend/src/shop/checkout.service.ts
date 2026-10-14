@@ -7,6 +7,7 @@ import { AuthService } from '../auth/auth.service';
 import { PricingService } from '../catalog/pricing.service';
 import { AppError } from '../common/http';
 import { PrismaService } from '../prisma.service';
+import { emailForPhone } from './no-email';
 import { OrderMail } from './order-mail';
 import { SiteAccess } from './site-access';
 import type { CheckoutDto, QuoteDto } from './checkout.controller';
@@ -48,12 +49,13 @@ export class CheckoutService {
       const existing = await this.prisma.order.findUnique({ where: { idempotencyKey } });
       if (existing) return this.confirmation(existing);
     }
-    const email = dto.customer.email;
+    const email = dto.customer.email ?? emailForPhone(dto.customer.phone);
+    const lastName = dto.customer.lastName ?? '';
     const order = await this.prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { email } })
         ?? await tx.user.create({
           data: {
-            email, firstName: dto.customer.firstName, lastName: dto.customer.lastName, phone: dto.customer.phone,
+            email, firstName: dto.customer.firstName, lastName, phone: dto.customer.phone,
             // Compte client créé à la commande : pas de mot de passe connu tant que l'espace client n'existe pas.
             passwordHash: await AuthService.hashPassword(randomBytes(24).toString('hex')),
           },
@@ -61,7 +63,7 @@ export class CheckoutService {
       const r = await this.compute(tx, dto, user.id);
 
       const number = await this.newNumber(tx);
-      const address = { ...dto.address, firstName: dto.customer.firstName, lastName: dto.customer.lastName, phone: dto.customer.phone };
+      const address = { ...dto.address, firstName: dto.customer.firstName, lastName, phone: dto.customer.phone };
       const created = await tx.order.create({
         data: {
           number, userId: user.id, status: 'PENDING', paymentStatus: 'PENDING', paymentMethod: dto.paymentMethod,

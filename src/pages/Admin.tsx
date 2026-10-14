@@ -125,11 +125,13 @@ const historyLabel = (h: ApiHistory) => {
   if (h.from === h.to) return h.note ?? 'Mise à jour';
   return 'Statut → ' + osOf(h.to)[1] + (h.note ? ' · ' + h.note : '');
 };
+/** Commandes passées sans e-mail : le compte porte une adresse technique en .invalid, on ne l'affiche pas. */
+const realEmail = (e: string) => (e.endsWith('.invalid') ? '' : e);
 const toOrder = (o: ApiOrder): AOrder => {
   const pay = o.payments.find((p) => p.status === 'PAID' || p.status === 'PARTIALLY_REFUNDED') ?? o.payments[o.payments.length - 1];
   const a = o.shippingAddress, ship = o.shipments[0];
   return {
-    id: o.id, number: o.number, customer: `${o.user.firstName} ${o.user.lastName}`, email: o.user.email, date: frDateTime(o.placedAt),
+    id: o.id, number: o.number, customer: `${o.user.firstName} ${o.user.lastName}`.trim(), email: realEmail(o.user.email) || a.phone || o.user.phone || '', date: frDateTime(o.placedAt),
     lines: o.items.map((i) => ({ id: i.id, name: i.productName, variant: i.variantLabel, qty: i.quantity, unit: i.unitPriceCents / 100 })),
     subtotal: o.subtotalCents / 100, shipping: o.shippingCents / 100, discount: o.discountCents / 100, total: o.totalCents / 100, coupon: o.couponCode,
     status: o.status, method: METHOD_LABEL[o.paymentMethod], pay: payLabel(o),
@@ -160,7 +162,7 @@ const toReview = (r: ApiReview): Review => ({
   id: r.id, product: r.product.name, author: r.author, date: frDate(r.createdAt), rating: r.rating, title: r.title ?? '', body: r.comment, status: r.status,
 });
 const toClient = (u: ApiUserRow): Client => ({
-  id: u.id, name: `${u.firstName} ${u.lastName}`, email: u.email, orders: u.ordersCount, since: frDate(u.createdAt), spent: u.totalSpentCents / 100,
+  id: u.id, name: `${u.firstName} ${u.lastName}`.trim(), email: realEmail(u.email) || 'Sans e-mail', orders: u.ordersCount, since: frDate(u.createdAt), spent: u.totalSpentCents / 100,
 });
 
 /* ------------------------------------------------------------------ */
@@ -1181,8 +1183,8 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
           return (
             <>
               <div style={thRow(cols)}><span>Client</span><span>E-mail</span><span>Commandes</span><span>Total dépensé</span><span>Inscrit le</span><span>Rôle</span></div>
-              {clients.map(({ name, email, orders: n, since, spent }) => (
-                <div key={email} style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #EDEDEA' }}>
+              {clients.map(({ id, name, email, orders: n, since, spent }) => (
+                <div key={id} style={{ display: 'grid', gridTemplateColumns: cols, gap: 16, alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #EDEDEA' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}><span style={{ width: 32, height: 32, borderRadius: '50%', background: '#EEEEEB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600 }}>{name.split(' ').map((x) => x[0]).join('')}</span><span style={{ fontSize: 14 }}>{name}</span></span>
                   <span style={{ fontSize: 13.5, color: '#55554F' }}>{email}</span>
                   <span style={{ fontSize: 14 }}>{n}</span>
@@ -1359,7 +1361,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                 <div style={{ display: 'grid', gridTemplateColumns: m ? 'minmax(0,1fr)' : 'repeat(2,minmax(0,1fr))', gap: 12 }}>
                   <div style={infoCard}>
                     <span style={{ ...monoLabel, fontSize: 10, marginBottom: 4 }}>Client &amp; livraison</span>
-                    <span style={{ fontWeight: 600 }}>{order.customer}</span><span>{order.email}</span><span>{order.phone}</span><span style={{ color: '#55554F' }}>{order.address}</span>
+                    <span style={{ fontWeight: 600 }}>{order.customer}</span>{order.email !== order.phone && <span>{order.email}</span>}<span>{order.phone}</span><span style={{ color: '#55554F' }}>{order.address}</span>
                   </div>
                   <div style={infoCard}>
                     <span style={{ ...monoLabel, fontSize: 10, marginBottom: 4 }}>Paiement</span>

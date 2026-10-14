@@ -104,7 +104,7 @@ export class CatalogController {
     return {
       data: {
         ...this.toDto(p, await this.pricing.activePromotions()),
-        reviews: reviews.map(({ user, ...r }) => ({ ...r, author: `${user.firstName} ${user.lastName.charAt(0)}.` })),
+        reviews: reviews.map(({ user, ...r }) => ({ ...r, author: user.lastName ? `${user.firstName} ${user.lastName.charAt(0)}.` : user.firstName })),
       },
     };
   }

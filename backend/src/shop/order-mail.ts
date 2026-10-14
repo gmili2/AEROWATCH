@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from '../common/mail.service';
 import { PrismaService } from '../prisma.service';
+import { hasRealEmail } from './no-email';
 
 type Address = { firstName: string; lastName: string; phone: string; line1: string; line2?: string; city: string; postalCode?: string; country: string };
 
@@ -47,9 +48,13 @@ export class OrderMail {
         <p style="font-size:20px;letter-spacing:.2em;margin:0 0 24px">GMBIJOUX</p>${body}</div>`;
 
       const shop = this.config.get<string>('ORDER_NOTIFY_EMAIL');
+      const email = hasRealEmail(o.user.email) ? o.user.email : null;
+      const name = `${a.firstName} ${a.lastName}`.trim();
+      const contact = [email, a.phone].filter(Boolean).join(', ');
       await Promise.all([
-        this.mail.send({
-          to: o.user.email,
+        // Commande passée sans e-mail : pas de confirmation au client, seulement l'alerte à la boutique.
+        email && this.mail.send({
+          to: email,
           subject: `Votre commande ${o.number} est bien reçue`,
           html: page(`<p>Bonjour ${esc(a.firstName)},</p><p>Merci pour votre commande <b>${o.number}</b>. Nous la préparons et vous contacterons pour la livraison.</p>${bank}<div style="margin-top:24px">${recap}</div>`),
           text: `Bonjour ${a.firstName},\n\nMerci pour votre commande ${o.number} (${dh(o.totalCents)}). Nous la préparons et vous contacterons pour la livraison.\nPaiement : ${payment}${o.paymentMethod === 'BANK_TRANSFER' ? `\nRIB : ${this.config.get<string>('BANK_RIB') ?? '—'} — référence ${o.number}` : ''}\n\nGMBIJOUX`,
@@ -58,9 +63,9 @@ export class OrderMail {
         shop && this.mail.send({
           to: shop.split(',').map((s) => s.trim()).filter(Boolean),
           subject: `Nouvelle commande ${o.number} — ${dh(o.totalCents)}`,
-          html: page(`<p>Nouvelle commande <b>${o.number}</b> de ${esc(`${a.firstName} ${a.lastName}`)} (${esc(o.user.email)}).</p>${o.customerNote ? `<p style="color:#444"><b>Note du client :</b> ${esc(o.customerNote)}</p>` : ''}${recap}`),
-          text: `Nouvelle commande ${o.number} de ${a.firstName} ${a.lastName} (${o.user.email}, ${a.phone}) : ${dh(o.totalCents)}, ${payment}.`,
-          replyTo: o.user.email,
+          html: page(`<p>Nouvelle commande <b>${o.number}</b> de ${esc(name)} (${esc(contact)}).</p>${o.customerNote ? `<p style="color:#444"><b>Note du client :</b> ${esc(o.customerNote)}</p>` : ''}${recap}`),
+          text: `Nouvelle commande ${o.number} de ${name} (${contact}) : ${dh(o.totalCents)}, ${payment}.`,
+          replyTo: email ?? undefined,
         }),
       ]);
     } catch (e) {
