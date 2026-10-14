@@ -81,6 +81,8 @@ type Catalog = {
   categories: ShopCategory[];
   /** Image d'une carte de collection : celle de la catégorie, sinon la photo de la montre la plus récente concernée. */
   imageFor: (tag: Tag) => string | undefined;
+  /** Carte ou filtre lié à une catégorie masquée dans l'administration. */
+  hidden: (id: CategoryId) => boolean;
   status: 'loading' | 'ready' | 'error';
   find: (slug: string) => Product | undefined;
   reload: () => void;
@@ -125,7 +127,9 @@ export function CatalogProvider({ children }: { children: ReactNode }) {
       return products.filter((p) => p.image && p.cats.includes(tag))
         .sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))[0]?.image;
     };
-    return { site, unlocked: () => setSite((s) => (s ? { ...s, unlocked: true } : s)), products, categories, imageFor, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
+    // /categories ne renvoie que les catégories visibles : une catégorie absente de la liste est masquée.
+    const hidden = (id: CategoryId) => status === 'ready' && id !== 'all' && !!CATEGORY_OF[id] && !categories.some((c) => c.slug === CATEGORY_OF[id]);
+    return { site, unlocked: () => setSite((s) => (s ? { ...s, unlocked: true } : s)), products, categories, imageFor, hidden, status, find: (slug) => bySlug.get(slug), reload: () => { setStatus('loading'); load(); } };
   }, [site, products, categories, status, load]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

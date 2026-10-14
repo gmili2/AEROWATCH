@@ -569,8 +569,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
     Promise.all([
       loadProducts(), loadOrders(), loadStats(), loadPromos(),
       apiAll<ApiReview>('/admin/reviews').then((d) => setReviews(d.map(toReview))),
-      Promise.all([api<{ data: Ref[] }>('/categories'), api<{ data: Ref[] }>('/collections'), api<{ data: Ref[] }>('/brands')])
-        .then(([c, co, b]) => setRefs({ categories: c.data, collections: co.data, brands: b.data })),
+      // Les catégories (masquées comprises) viennent de loadCats ; /categories ne liste que les visibles.
+      Promise.all([api<{ data: Ref[] }>('/collections'), api<{ data: Ref[] }>('/brands')])
+        .then(([co, b]) => setRefs((r) => ({ ...r, collections: co.data, brands: b.data }))),
     ]).catch(fail).finally(() => setLoaded(true));
   }, [loadProducts, loadOrders, loadStats, loadPromos, fail]);
 
@@ -1137,7 +1138,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                 const setD = (patch: Partial<typeof d>) => setCatDraft((x) => ({ ...x, [c.id]: { ...d, ...patch } }));
                 return (
                   <div key={c.id} style={{ ...card, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ ...thumb, position: 'relative', aspectRatio: '4/3', backgroundImage: c.imageUrl ? `url(${c.imageUrl})` : thumb.backgroundImage, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, padding: 10 }}>
+                    <div style={{ ...thumb, position: 'relative', aspectRatio: '4/3', opacity: c.isActive ? 1 : 0.45, backgroundImage: c.imageUrl ? `url(${c.imageUrl})` : thumb.backgroundImage, backgroundSize: 'cover', backgroundPosition: 'center', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, padding: 10 }}>
                       {!c.imageUrl && <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#6B6B66' }}>Aucune image</span>}
                       <label className="adm-small" style={{ position: 'relative', height: 34, padding: '0 14px', borderRadius: 999, border: '1px solid #D9D9D4', background: '#fff', display: 'inline-flex', alignItems: 'center', fontSize: 12.5, cursor: busy ? 'wait' : 'pointer' }}>
                         {c.imageUrl ? 'Changer l’image' : 'Ajouter une image'}
@@ -1150,8 +1151,14 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                       <input className="adm-input" value={d.name} aria-label="Nom" onChange={(e) => setD({ name: e.target.value })} style={{ height: 40, padding: '0 12px', border: '1px solid #D9D9D4', fontSize: 14.5, fontWeight: 600, outline: 'none' }} />
                       <textarea className="adm-input" rows={2} value={d.description} aria-label="Description" placeholder="Phrase affichée sous le titre de la catégorie" onChange={(e) => setD({ description: e.target.value })} style={{ padding: '10px 12px', border: '1px solid #D9D9D4', fontSize: 13.5, lineHeight: 1.5, resize: 'vertical', outline: 'none' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 12.5, color: '#6B6B66' }}>{c._count.products} montre{c._count.products > 1 ? 's' : ''} · /{c.slug}</span>
+                        <span style={{ fontSize: 12.5, color: '#6B6B66' }}>
+                          {!c.isActive && <strong style={{ color: '#111' }}>Masquée · </strong>}{c._count.products} montre{c._count.products > 1 ? 's' : ''} · /{c.slug}
+                        </span>
                         <span style={{ display: 'flex', gap: 6 }}>
+                          <SmallBtn onClick={() => {
+                            if (c.isActive && !window.confirm(`Masquer « ${c.name} » ? Sa carte et ses ${c._count.products} montre(s) disparaîtront de la boutique (elles restent dans l’admin).`)) return;
+                            catAction(() => api<{ data: ApiCategory }>(`/admin/categories/${c.id}`, { method: 'PATCH', body: { isActive: !c.isActive } }), c.isActive ? 'Catégorie masquée' : 'Catégorie de nouveau visible');
+                          }}>{c.isActive ? 'Masquer' : 'Afficher'}</SmallBtn>
                           {!c._count.products && <SmallBtn onClick={() => { if (window.confirm(`Supprimer la catégorie « ${c.name} » ?`)) catAction(async () => { await api(`/admin/categories/${c.id}`, { method: 'DELETE' }); return null; }, 'Catégorie supprimée'); }}>Supprimer</SmallBtn>}
                           {dirty && <SmallBtn dark onClick={() => catAction(async () => {
                             const r = await api<{ data: ApiCategory }>(`/admin/categories/${c.id}`, { method: 'PATCH', body: { name: d.name.trim(), description: d.description.trim() || null } });
@@ -1165,7 +1172,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                 );
               })}
             </div>
-            <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Les images s’affichent sur les cartes « Trouver sa montre » de la boutique. Format paysage conseillé, JPG, PNG ou WebP, 5 Mo maximum.</span>
+            <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Les images s’affichent sur les cartes « Trouver sa montre » de la boutique. Format paysage conseillé, JPG, PNG ou WebP, 5 Mo maximum. Une catégorie masquée disparaît de la boutique avec toutes ses montres ; « Afficher » la rétablit.</span>
           </>
         )}
 

@@ -117,7 +117,7 @@ export class CheckoutService {
     }
     const slugs = [...new Set([...wanted.values()].map((w) => w.slug))];
     const products = await db.product.findMany({
-      where: { slug: { in: slugs }, status: 'ACTIVE' },
+      where: { slug: { in: slugs }, status: 'ACTIVE', category: { isActive: true } },
       include: { ...variantInclude, images: { where: { isPrimary: true }, take: 1 } },
     });
     if (lock && products.length) {

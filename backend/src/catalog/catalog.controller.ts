@@ -49,13 +49,14 @@ export class CatalogController {
   @UseGuards(SiteAccessGuard)
   @Get('products')
   async products(@Query() q: ProductQuery) {
-    const where: Prisma.ProductWhereInput = { status: 'ACTIVE' };
+    // Les montres d'une catégorie masquée n'apparaissent nulle part dans la boutique.
+    const where: Prisma.ProductWhereInput = { status: 'ACTIVE', category: { isActive: true } };
     const and: Prisma.ProductWhereInput[] = [];
     if (q.q) and.push({ OR: [
       { name: { contains: q.q } }, { description: { contains: q.q } },
       { sku: { contains: q.q } }, { collection: { name: { contains: q.q } } },
     ] });
-    if (q.category) where.category = { slug: q.category };
+    if (q.category) where.category = { isActive: true, slug: q.category };
     if (q.collection) where.collection = { slug: q.collection };
     if (q.brand) where.brand = { slug: q.brand };
     if (q.tag) where.extraSpecs = { path: '$.tags', array_contains: [q.tag] };
@@ -94,7 +95,7 @@ export class CatalogController {
   @UseGuards(SiteAccessGuard)
   @Get('products/:slug')
   async product(@Param('slug') slug: string) {
-    const p = await this.prisma.product.findFirst({ where: { slug, status: 'ACTIVE' }, include });
+    const p = await this.prisma.product.findFirst({ where: { slug, status: 'ACTIVE', category: { isActive: true } }, include });
     if (!p) throw new AppError(HttpStatus.NOT_FOUND, 'PRODUCT_NOT_FOUND', 'Montre introuvable');
     const reviews = await this.prisma.review.findMany({
       where: { productId: p.id, status: 'APPROVED' }, orderBy: { createdAt: 'desc' }, take: 20,

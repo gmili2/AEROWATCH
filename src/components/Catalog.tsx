@@ -113,10 +113,10 @@ export function ProductGrid({ items }: { items: Product[] }) {
 
 export function CollectionsGrid() {
   const L = useLayout();
-  const { imageFor } = useCatalog();
+  const { imageFor, hidden } = useCatalog();
   return (
     <div style={{ display: 'grid', gridTemplateColumns: L.g3, gap: L.gap }}>
-      {COLLECTIONS.map((c) => {
+      {COLLECTIONS.filter((c) => !hidden(c.id)).map((c) => {
         const img = c.id === 'all' ? undefined : imageFor(c.id);
         return (
         <Link key={c.id} to={shopPath(c.id)} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

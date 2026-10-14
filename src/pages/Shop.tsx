@@ -15,7 +15,7 @@ export default function Shop() {
   const navigate = useNavigate();
   const cat = catFromSlug(useParams().cat);
   const [sort, setSort] = useState<Sort>('pop');
-  const { products, status } = useCatalog();
+  const { products, status, hidden } = useCatalog();
   // Page dans l'adresse (?page=2) : lien partageable, bouton « retour » du navigateur.
   const [params, setParams] = useSearchParams();
   const listTop = useRef<HTMLElement>(null);
@@ -30,7 +30,7 @@ export default function Shop() {
     return l;
   }, [cat, sort, products]);
 
-  if (!cat) return <Navigate to={shopPath('all')} replace />;
+  if (!cat || hidden(cat)) return <Navigate to={shopPath('all')} replace />;
   const [title, sub] = CATS[cat];
   const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
   const page = Math.min(pages, Math.max(1, Number(params.get('page')) || 1));
@@ -50,7 +50,7 @@ export default function Shop() {
       <section ref={listTop} style={{ padding: `0 ${L.px}`, display: 'flex', flexDirection: 'column', gap: 32, scrollMarginTop: 100 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '14px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
           <div className="hscroll" style={{ display: 'flex', gap: 6, maxWidth: '100%', paddingBottom: 2 }}>
-            {(Object.keys(CATS) as CategoryId[]).map((id) => (
+            {(Object.keys(CATS) as CategoryId[]).filter((id) => !hidden(id)).map((id) => (
               <button key={id} className={`chip${cat === id ? ' active' : ''}`} onClick={() => navigate(shopPath(id))}>
                 {id === 'all' ? 'Toutes' : CATS[id][0].replace('Montres ', '')}
               </button>
