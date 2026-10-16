@@ -10,7 +10,7 @@ export type ApiShopProduct = {
   slug: string; sku: string; name: string; shortDescription: string | null; description: string;
   priceCents: number; finalPriceCents: number; onSale: boolean; priceFromCents: number; hasPriceRange: boolean;
   inStock: boolean; lowStock: boolean; stock: number | null; isFeatured: boolean; purchasable: boolean; gender: 'MEN' | 'WOMEN' | 'UNISEX';
-  brand: { name: string }; images: { url: string; alt: string | null }[];
+  brand: { name: string }; images: { url: string; alt: string | null }[]; videos?: string[];
   category: { slug: string }; collection: { name: string; slug: string } | null; movementType: string; caliber: string | null;
   caseMaterial: string; strapMaterial: string; diameterMm: number; thicknessMm: number | null; lugWidthMm: number | null;
   waterResistanceM: number; glass: string; powerReserveHours: number | null; ratingAvg: number; ratingCount: number;
@@ -60,7 +60,7 @@ export function toShopProduct(p: ApiShopProduct): Product {
   const dims = [`Ø ${mm(p.diameterMm)} mm`, p.thicknessMm && `épaisseur ${mm(p.thicknessMm)} mm`, p.lugWidthMm && `entre-cornes ${p.lugWidthMm} mm`].filter(Boolean).join(' · ');
   const movement = [MOVEMENT[p.movementType] ?? p.movementType, p.caliber && `calibre ${p.caliber}`, p.powerReserveHours && `réserve de marche ${p.powerReserveHours} h`].filter(Boolean).join(' · ');
   return {
-    id: p.slug, sku: p.sku, name: p.name, brand: p.brand.name === HOUSE ? undefined : p.brand.name, image: media(p.images[0]?.url), photos: p.images.map((i) => media(i.url)!), col: p.collection?.name ?? '', kind: p.shortDescription ?? x.kind ?? `${MOVEMENT[p.movementType] ?? ''} · ${mm(p.diameterMm)} mm`,
+    id: p.slug, sku: p.sku, name: p.name, brand: p.brand.name === HOUSE ? undefined : p.brand.name, image: media(p.images[0]?.url), photos: p.images.map((i) => media(i.url)!), videos: (p.videos ?? []).map((v) => media(v)!), col: p.collection?.name ?? '', kind: p.shortDescription ?? x.kind ?? `${MOVEMENT[p.movementType] ?? ''} · ${mm(p.diameterMm)} mm`,
     cats: tagsOf(p),
     price: cheapest ? cheapest.price : euros(p.finalPriceCents),
     old: cheapest ? cheapest.old : p.onSale ? euros(p.priceCents) : null,
