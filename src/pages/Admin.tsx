@@ -46,6 +46,7 @@ const optInt = (s: string) => (String(s).trim() === '' ? null : Number(s));
 type Ref = { id: string; name: string };
 type ProductImage = { id: string; url: string; alt: string | null; isPrimary: boolean };
 type ProductVideo = { id: string; url: string };
+type ApiCollection = { id: string; name: string; slug: string; isActive: boolean; _count: { products: number } };
 type ApiCategory = { id: string; name: string; slug: string; description: string | null; imageUrl: string | null; position: number; isActive: boolean; _count: { products: number } };
 type ApiProduct = {
   id: string; name: string; sku: string; reference: string; description: string; priceCents: number; salePriceCents: number | null;
@@ -528,6 +529,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   const [form, setForm] = useState<Record<string, string>>({});
   const [images, setImages] = useState<AProduct['images']>([]);
   const [videos, setVideos] = useState<AProduct['videos']>([]);
+  const [colls, setColls] = useState<ApiCollection[]>([]);
   const [opts, setOpts] = useState<VOption[]>([]);
   const [vars, setVars] = useState<VRow[]>([]);
   const [varsDirty, setVarsDirty] = useState(false);
@@ -574,8 +576,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
       loadProducts(), loadOrders(), loadStats(), loadPromos(),
       apiAll<ApiReview>('/admin/reviews').then((d) => setReviews(d.map(toReview))),
       // Les catégories (masquées comprises) viennent de loadCats ; /categories ne liste que les visibles.
-      Promise.all([api<{ data: Ref[] }>('/collections'), api<{ data: Ref[] }>('/brands')])
-        .then(([co, b]) => setRefs((r) => ({ ...r, collections: co.data, brands: b.data }))),
+      // Collections archivées comprises : une montre garde sa collection quand on la modifie.
+      Promise.all([api<{ data: ApiCollection[] }>('/admin/collections'), api<{ data: Ref[] }>('/brands')])
+        .then(([co, b]) => { setColls(co.data); setRefs((r) => ({ ...r, collections: co.data, brands: b.data })); }),
     ]).catch(fail).finally(() => setLoaded(true));
   }, [loadProducts, loadOrders, loadStats, loadPromos, fail]);
 
@@ -628,6 +631,14 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
     }, 'Montre supprimée');
   };
 
+  const archivedColl = (name: string) => colls.some((c) => c.name === name && !c.isActive);
+  const toggleColl = (c: ApiCollection) => {
+    if (c.isActive && !window.confirm(`Archiver la collection « ${c.name} » ?\n\nSes ${c._count.products} montre(s) disparaîtront de la boutique (fiches, recherche, commande). Elles restent dans l’admin avec leur statut, et « Restaurer » les remet en ligne.`)) return;
+    run(async () => {
+      const r = await api<{ data: ApiCollection }>(`/admin/collections/${c.id}/status`, { method: 'PATCH', body: { isActive: !c.isActive } });
+      setColls((xs) => xs.map((x) => (x.id === r.data.id ? r.data : x)));
+    }, c.isActive ? `Collection « ${c.name} » archivée` : `Collection « ${c.name} » restaurée`);
+  };
   const [cats, setCats] = useState<ApiCategory[]>([]);
   const [catDraft, setCatDraft] = useState<Record<string, { name: string; description: string }>>({});
   const [newCat, setNewCat] = useState('');
@@ -1000,6 +1011,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
                           <Pill dot={p.status === 'Actif' ? DOT.green : p.status === 'Brouillon' ? DOT.amber : DOT.grey}>{p.status}</Pill>
                           {!p.purchasable && <span style={{ fontSize: 11.5, color: '#6B6B66' }} title="Non disponible à la vente">Vitrine</span>}
+                          {archivedColl(p.collection) && <span style={{ fontSize: 11.5, color: '#6B6B66' }} title="Collection archivée : la montre n’apparaît pas dans la boutique">Collection archivée</span>}
                         </span>
                         <span style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                           <SmallBtn onClick={() => openProduct(p)}>Modifier</SmallBtn>
@@ -1195,6 +1207,22 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
               })}
             </div>
             <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Les images s’affichent sur les cartes « Trouver sa montre » de la boutique. Format paysage conseillé, JPG, PNG ou WebP, 5 Mo maximum. Une catégorie masquée disparaît de la boutique avec toutes ses montres ; « Afficher » la rétablit.</span>
+
+            <span style={{ ...monoLabel, marginTop: 24 }}>Collections</span>
+            <div style={{ display: 'grid', gridTemplateColumns: m ? 'minmax(0,1fr)' : 'repeat(auto-fill,minmax(260px,1fr))', gap: 10 }}>
+              {colls.map((c) => (
+                <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '12px 14px', background: '#fff', border: '1px solid #E6E6E1', opacity: c.isActive ? 1 : 0.6 }}>
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>{c.name}</span>
+                    <span style={{ fontSize: 12, color: '#6B6B66' }}>
+                      {!c.isActive && <strong style={{ color: '#111' }}>Archivée · </strong>}{c._count.products} montre{c._count.products > 1 ? 's' : ''}
+                    </span>
+                  </span>
+                  <SmallBtn onClick={() => toggleColl(c)}>{c.isActive ? 'Archiver' : 'Restaurer'}</SmallBtn>
+                </div>
+              ))}
+            </div>
+            <span style={{ fontSize: 12.5, color: '#6B6B66' }}>Archiver une collection la retire de la boutique avec toutes ses montres, sans changer leur statut ; « Restaurer » remet tout en ligne comme avant.</span>
           </>
         )}
 
