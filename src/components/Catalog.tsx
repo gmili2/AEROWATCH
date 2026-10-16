@@ -64,7 +64,10 @@ export function ProductCard({ p }: { p: Product }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em' }}>{p.kind}</span>
-        <h3 style={{ margin: 0, fontStretch: '115%', fontWeight: 600, fontSize: 15, textTransform: 'uppercase', letterSpacing: '.01em' }}>{p.name}</h3>
+        {/* Vrai lien (et pas seulement le clic sur la carte) : les moteurs de recherche suivent les liens pour trouver les fiches. */}
+        <h3 style={{ margin: 0, fontStretch: '115%', fontWeight: 600, fontSize: 15, textTransform: 'uppercase', letterSpacing: '.01em' }}>
+          <Link to={productPath(p.id)} onClick={(e) => e.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none' }}>{p.name}</Link>
+        </h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 10, fontSize: 15 }}>
           <span>{p.hasRange ? 'dès ' : ''}{fmt(p.price)}</span>
           {p.old && <span style={{ fontSize: 13, color: 'var(--graphite)', textDecoration: 'line-through' }}>{fmt(p.old)}</span>}

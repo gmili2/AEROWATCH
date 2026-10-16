@@ -12,6 +12,7 @@ import Product from './pages/Product';
 import Shop, { Collections } from './pages/Shop';
 import { initPixel, track } from './pixel';
 import { PATHS } from './routes';
+import { HOME_TITLE, SHOP_PITCH, setMeta } from './seo';
 import { useStore } from './store';
 
 const TITLES: Record<string, string> = {
@@ -26,6 +27,20 @@ const TITLES: Record<string, string> = {
   [PATHS.account]: 'Mon compte',
   [PATHS.charte]: 'Charte graphique',
 };
+/** Pages de la boutique : mêmes titres que l'API (backend/src/catalog/seo.controller.ts). */
+const SHOP_TITLES: Record<string, string> = {
+  '/montres': 'Toutes les montres',
+  '/montres/homme': 'Montres homme',
+  '/montres/femme': 'Montres femme',
+  '/montres/automatiques': 'Montres automatiques',
+  '/montres/classiques': 'Montres classiques',
+  '/montres/sport': 'Montres sport',
+  '/montres/avec-coffret': 'Montres avec coffret',
+  '/montres/boite-simple': 'Montres en boîte simple',
+  '/montres/nouveautes': 'Nouveautés',
+};
+/** Pages personnelles : jamais dans les résultats de recherche. */
+const PRIVATE = [PATHS.cart, PATHS.checkout, PATHS.account, PATHS.charte];
 
 export default function App() {
   const L = useLayout();
@@ -37,10 +52,18 @@ export default function App() {
   useEffect(() => {
     window.scrollTo({ top: 0 });
     closeAll();
-    if (!pathname.startsWith('/montre/') && !pathname.startsWith(PATHS.admin)) {
-      const t = pathname === '/' ? '' : TITLES[pathname] ?? (pathname.startsWith('/montres') ? 'Montres' : '');
-      document.title = t ? `${t} — GMBIJOUX` : 'GMBIJOUX — Montres';
-    }
+    // Fiche montre : balises posées par la page elle-même (nom, prix, description).
+    if (pathname.startsWith('/montre/')) return;
+    if (pathname.startsWith(PATHS.admin)) { setMeta({ title: 'Administration — GMBIJOUX', path: pathname, noindex: true }); return; }
+    if (pathname === '/') { setMeta({ title: HOME_TITLE, path: '/' }); return; }
+    const shop = SHOP_TITLES[pathname];
+    const t = shop ?? TITLES[pathname] ?? 'Montres';
+    setMeta({
+      title: `${t} — GMBIJOUX`,
+      description: shop ? `${shop} au Maroc, boutique GMBIJOUX à Casablanca. ${SHOP_PITCH}` : undefined,
+      path: pathname,
+      noindex: PRIVATE.includes(pathname) || (!shop && !TITLES[pathname]),
+    });
   }, [pathname, closeAll]);
   // Pixel Meta : une vue de page à chaque changement d'adresse (pas dans l'administration).
   useEffect(() => {
