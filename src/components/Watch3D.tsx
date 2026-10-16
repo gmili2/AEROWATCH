@@ -15,12 +15,17 @@ export function Watch3D({ size = '100%' }: { size?: string }) {
     if (!el) return;
     let cleanup = () => {};
     let cancelled = false;
-    import('./watch-scene').then(({ mountWatch }) => {
+    const start = () => import('./watch-scene').then(({ mountWatch }) => {
       if (cancelled) return;
       const stop = mountWatch(el);
       if (stop) { cleanup = stop; setReady(true); }
     }).catch(() => { /* WebGL ou chargement indisponible : on garde le cadran dessiné */ });
-    return () => { cancelled = true; cleanup(); };
+    // three.js (~550 Ko) n'est téléchargé qu'à l'approche de la montre : le haut de page s'affiche sans l'attendre.
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { io.disconnect(); start(); }
+    }, { rootMargin: '300px' });
+    io.observe(el);
+    return () => { cancelled = true; io.disconnect(); cleanup(); };
   }, []);
 
   return (
