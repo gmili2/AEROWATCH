@@ -8,7 +8,12 @@ import { dirname, join } from 'node:path';
  * Sans effet ailleurs (macOS, Debian/Ubuntu, ou variable déjà définie).
  */
 export function pinPrismaEngine() {
-  if (process.platform !== 'linux' || process.env.PRISMA_QUERY_ENGINE_LIBRARY) return;
+  if (process.platform !== 'linux') return;
+  // Le moteur Prisma crée un thread par cœur (56 sur l'hébergement, soit ~68 threads par API). Or le compte
+  // mutualisé limite le nombre de processus, threads compris : à deux boutiques, la limite était atteinte
+  // (SSH refusé, migrations bloquées, MaxiGadget arrêté). 2 threads suffisent largement à ce trafic.
+  process.env.TOKIO_WORKER_THREADS ??= '2';
+  if (process.env.PRISMA_QUERY_ENGINE_LIBRARY) return;
   const ssl = existsSync('/usr/lib64/libssl.so.3') ? '3.0.x' : existsSync('/usr/lib64/libssl.so.1.1') ? '1.1.x' : null;
   if (!ssl) return;
   let dir: string;
