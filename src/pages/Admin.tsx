@@ -50,7 +50,7 @@ type ApiCollection = { id: string; name: string; slug: string; isActive: boolean
 type ApiCategory = { id: string; name: string; slug: string; description: string | null; imageUrl: string | null; position: number; isActive: boolean; _count: { products: number } };
 type ApiProduct = {
   id: string; name: string; sku: string; reference: string; description: string; priceCents: number; salePriceCents: number | null;
-  stock: number; status: string; purchasable: boolean; brand: Ref; category: Ref; collection: Ref | null; movementType: string; caseMaterial: string;
+  stock: number; unlimitedStock: boolean; status: string; purchasable: boolean; brand: Ref; category: Ref; collection: Ref | null; movementType: string; caseMaterial: string;
   strapMaterial: string; color: string; diameterMm: number; waterResistanceM: number; glass: string; powerReserveHours: number | null;
   warrantyMonths: number; soldCount: number; images: ProductImage[]; videos: ProductVideo[];
   options: { id: string; name: string; values: { id: string; label: string; colorHex: string | null }[] }[];
@@ -80,6 +80,8 @@ type AProduct = {
   id: string; name: string; sku: string; reference: string; description: string; collection: string; category: string;
   price: string; sale: string; stock: string; status: string; brand: string; movement: string; caseMat: string; strap: string;
   color: string; diameter: string; water: string; glass: string; reserve: string; warranty: string; sold: number; images: ProductImage[]; videos: ProductVideo[]; purchasable: boolean;
+  /** « Oui » / « Non » (valeur du formulaire). */
+  unlimited: string;
   options: VOption[]; variants: VRow[];
 };
 /** Option en cours d'édition (Couleur, Bracelet…) ; `color` affiche des pastilles. */
@@ -103,7 +105,7 @@ const toProduct = (p: ApiProduct): AProduct => ({
   category: p.category.name, price: euros(p.priceCents), sale: euros(p.salePriceCents), stock: String(p.stock), status: labelOf(PSTATUS, p.status),
   brand: p.brand.name, movement: labelOf(MOVES, p.movementType), caseMat: p.caseMaterial, strap: p.strapMaterial, color: p.color,
   diameter: String(p.diameterMm), water: String(p.waterResistanceM), glass: p.glass, reserve: p.powerReserveHours == null ? '' : String(p.powerReserveHours),
-  warranty: String(p.warrantyMonths), sold: p.soldCount, images: p.images, videos: p.videos ?? [], purchasable: p.purchasable,
+  warranty: String(p.warrantyMonths), sold: p.soldCount, images: p.images, videos: p.videos ?? [], purchasable: p.purchasable, unlimited: p.unlimitedStock ? 'Oui' : 'Non',
   options: p.options.map((o) => ({
     name: o.name, color: o.values.some((v) => v.colorHex), values: o.values.map((v) => ({ label: v.label, hex: v.colorHex ?? '#111111' })),
   })),
@@ -622,6 +624,12 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
       applyProduct((await api<{ data: ApiProduct }>(`/admin/products/${id}/videos`, { method: 'POST', body: fd })).data);
     }
   }, files.length > 1 ? `${files.length} vidéos ajoutées` : 'Vidéo ajoutée');
+  const duplicateProduct = (p: AProduct) => run(async () => {
+    const r = await api<{ data: ApiProduct }>(`/admin/products/${p.id}/duplicate`, { method: 'POST' });
+    const copy = toProduct(r.data);
+    setProducts((ps) => [...ps, copy]);
+    openProduct(copy); // la copie s'ouvre directement pour être renommée et ajustée
+  }, `« ${p.name} » dupliquée en brouillon`);
   const deleteProduct = (p: AProduct) => {
     if (!window.confirm(`Supprimer définitivement « ${p.name} » ?\n\nSes photos et vidéos seront effacées du serveur. Les commandes déjà passées restent dans l’historique.\nPour la retirer seulement de la boutique, utilisez plutôt « Archiver ».`)) return;
     run(async () => {
@@ -669,7 +677,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
     setDrawer(kind); setEditId(id); setForm(f); setImages(imgs); setVideos(vids); setErrors({}); setOpts(o); setVars(v); setVarsDirty(false);
   };
   const openProduct = (p?: AProduct) => {
-    if (!p) return openForm('product', null, { name: '', sku: '', reference: '', description: '', price: '', sale: '', stock: '0', status: 'Brouillon', brand: refs.brands[0]?.name ?? '', collection: COLLS[0] ?? '', category: CATS[0] ?? '', movement: 'Automatique', caseMat: 'Acier 316L', strap: '', color: 'Noir', diameter: '', water: '', glass: 'Saphir', reserve: '', warranty: '24' });
+    if (!p) return openForm('product', null, { name: '', sku: '', reference: '', description: '', price: '', sale: '', stock: '0', status: 'Brouillon', brand: refs.brands[0]?.name ?? '', collection: COLLS[0] ?? '', category: CATS[0] ?? '', movement: 'Automatique', caseMat: 'Acier 316L', strap: '', color: 'Noir', diameter: '', water: '', glass: 'Saphir', reserve: '', warranty: '24', unlimited: 'Non' });
     const { images: imgs, videos: vids, sold, id, options, variants, purchasable, ...rest } = p;
     void sold; void purchasable;
     openForm('product', id, rest, imgs, options, variants, vids);
@@ -688,7 +696,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
     brandId: idOf(refs.brands, f.brand), categoryId: idOf(refs.categories, f.category), collectionId: idOf(refs.collections, f.collection) ?? null,
     movementType: keyOf(MOVES, f.movement), caseMaterial: f.caseMat.trim(), strapMaterial: f.strap.trim(), color: f.color.trim(),
     diameterMm: Number(f.diameter), waterResistanceM: Number(f.water), glass: f.glass.trim(), powerReserveHours: optInt(f.reserve),
-    warrantyMonths: Number(f.warranty || 24),
+    warrantyMonths: Number(f.warranty || 24), unlimitedStock: f.unlimited === 'Oui',
   });
   const promoTarget = (t: string) => {
     const [kind, name] = t.split(' · ');
@@ -731,10 +739,10 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
           let p = (await api<{ data: ApiProduct }>(`/admin/products/${editId}`, { method: 'PATCH', body })).data;
           if (varsDirty) p = (await saveVariants(editId)).data;
           const delta = Number(f.stock) - p.stock;
-          if (!p.variants.length && delta) p = (await api<{ data: ApiProduct }>(`/admin/products/${editId}/stock`, { method: 'POST', body: { delta, reason: 'ADJUSTMENT', note: 'Correction depuis la fiche produit' } })).data;
+          if (!p.variants.length && !p.unlimitedStock && delta) p = (await api<{ data: ApiProduct }>(`/admin/products/${editId}/stock`, { method: 'POST', body: { delta, reason: 'ADJUSTMENT', note: 'Correction depuis la fiche produit' } })).data;
           setProducts((ps) => ps.map((x) => (x.id === editId ? toProduct(p) : x)));
         } else {
-          let p = (await api<{ data: ApiProduct }>('/admin/products', { method: 'POST', body: { ...body, stock: vars.length ? 0 : Number(f.stock) } })).data;
+          let p = (await api<{ data: ApiProduct }>('/admin/products', { method: 'POST', body: { ...body, stock: vars.length || f.unlimited === 'Oui' ? 0 : Number(f.stock) } })).data;
           // La montre existe déjà si l'enregistrement des déclinaisons échoue : on passe en modification.
           setProducts((ps) => [...ps, toProduct(p)]);
           setEditId(p.id);
@@ -770,9 +778,9 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   const pendingReviews = reviews.filter((r) => r.status === 'PENDING').length;
   const SALES = sales.map((s) => s.revenue);
   const maxS = Math.max(1, ...SALES);
-  const lowStock = products.filter((p) => Number(p.stock) <= 3 && p.status !== 'Archivé');
+  const lowStock = products.filter((p) => p.unlimited !== 'Oui' && Number(p.stock) <= 3 && p.status !== 'Archivé');
   const q = pq.trim().toLowerCase();
-  const productRows = products.filter((p) => (pf === 'Tous' || (pf === 'Stock faible' ? Number(p.stock) <= 3 : p.status === pf)) && (!q || (p.name + ' ' + p.sku + ' ' + p.collection).toLowerCase().includes(q)));
+  const productRows = products.filter((p) => (pf === 'Tous' || (pf === 'Stock faible' ? p.unlimited !== 'Oui' && Number(p.stock) <= 3 : p.status === pf)) && (!q || (p.name + ' ' + p.sku + ' ' + p.collection).toLowerCase().includes(q)));
   const orderRows = orders.filter((o) => of === 'ALL' || o.status === of);
   const reviewRows = reviews.filter((r) => rf === 'ALL' || r.status === rf);
   const topProducts = products.filter((p) => p.status !== 'Archivé').sort((a, b) => b.sold - a.sold).slice(0, 4);
@@ -818,7 +826,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
   let groups: { title: string; fields: FieldDef[] }[] = [];
   if (drawer === 'product') groups = [
     { title: 'Informations', fields: [{ k: 'name', label: 'Nom *', ph: 'Nocturne 40', full: true }, { k: 'sku', label: 'SKU *', ph: 'GM-NOC-40' }, { k: 'reference', label: 'Référence', ph: 'Réf. fabricant' }, { k: 'description', label: 'Description', area: true, full: true, ph: 'Cadran, finitions, usage…' }] },
-    { title: 'Prix & stock', fields: [{ k: 'price', label: 'Prix (DH) *', type: 'number', ph: '13900' }, { k: 'sale', label: 'Prix promo (DH)', type: 'number', ph: 'Optionnel' }, { k: 'stock', label: vars.length ? 'Stock (déclinaisons)' : 'Stock *', type: 'number', disabled: vars.length > 0 }, { k: 'status', label: 'Statut', options: PSTATUS.map((x) => x[1]) }] },
+    { title: 'Prix & stock', fields: [{ k: 'price', label: 'Prix (DH) *', type: 'number', ph: '13900' }, { k: 'sale', label: 'Prix promo (DH)', type: 'number', ph: 'Optionnel' }, { k: 'stock', label: form.unlimited === 'Oui' ? 'Stock (illimité)' : vars.length ? 'Stock (déclinaisons)' : 'Stock *', type: 'number', disabled: vars.length > 0 || form.unlimited === 'Oui' }, { k: 'status', label: 'Statut', options: PSTATUS.map((x) => x[1]) }, { k: 'unlimited', label: 'Stock illimité (toujours commandable, rien n’est décompté)', options: ['Non', 'Oui'], full: true }] },
     { title: 'Classement', fields: [{ k: 'category', label: 'Catégorie', options: CATS }, { k: 'collection', label: 'Collection', options: COLLS }, { k: 'brand', label: 'Marque', options: refs.brands.map((b) => b.name), full: true }] },
     { title: 'Caractéristiques techniques', fields: [{ k: 'movement', label: 'Mouvement', options: MOVES.map((x) => x[1]) }, { k: 'caseMat', label: 'Matière du boîtier *' }, { k: 'strap', label: 'Matière du bracelet *' }, { k: 'color', label: 'Couleur *' }, { k: 'diameter', label: 'Diamètre (mm) *', type: 'number' }, { k: 'water', label: 'Étanchéité (m) *', type: 'number' }, { k: 'glass', label: 'Verre *' }, { k: 'reserve', label: 'Réserve de marche (h)', type: 'number' }, { k: 'warranty', label: 'Garantie (mois)', type: 'number' }] },
   ];
@@ -1007,7 +1015,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                           )}</span>
                         <span style={{ fontSize: 13.5 }}>{p.category}</span>
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, fontSize: 14 }}><span>{fmt(Number(p.price) || 0)}</span>{p.sale && <span style={{ fontSize: 12, color: '#6B6B66' }}>promo {fmt(Number(p.sale))}</span>}</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5 }}><Dot size={7} c={st === 0 ? DOT.red : st <= 3 ? DOT.amber : DOT.green} />{p.stock}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5 }}><Dot size={7} c={p.unlimited === 'Oui' ? DOT.green : st === 0 ? DOT.red : st <= 3 ? DOT.amber : DOT.green} />{p.unlimited === 'Oui' ? <span title="Stock illimité">∞</span> : p.stock}</span>
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-start' }}>
                           <Pill dot={p.status === 'Actif' ? DOT.green : p.status === 'Brouillon' ? DOT.amber : DOT.grey}>{p.status}</Pill>
                           {!p.purchasable && <span style={{ fontSize: 11.5, color: '#6B6B66' }} title="Non disponible à la vente">Vitrine</span>}
@@ -1019,6 +1027,7 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
                             const r = await api<{ data: ApiProduct }>(`/admin/products/${p.id}/status`, { method: 'PATCH', body: { status: p.status === 'Archivé' ? 'DRAFT' : 'ARCHIVED' } });
                             setProducts((ps) => ps.map((x) => (x.id === p.id ? toProduct(r.data) : x)));
                           }, p.status === 'Archivé' ? 'Montre restaurée en brouillon' : 'Montre archivée')}>{p.status === 'Archivé' ? 'Restaurer' : 'Archiver'}</SmallBtn>
+                          <SmallBtn onClick={() => duplicateProduct(p)}>Dupliquer</SmallBtn>
                           <SmallBtn onClick={() => deleteProduct(p)}>Supprimer</SmallBtn>
                         </span>
                       </div>
