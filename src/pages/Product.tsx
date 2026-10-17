@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useCatalog } from '../catalog';
 import { Crumbs, ProductGrid } from '../components/Catalog';
 import { QtyStepper } from '../components/Shell';
+import { BagIcon } from '../components/icons';
 import { fmt, ratingF, stars, type Product as P, type Variant } from '../data';
 import { useLayout } from '../layout';
 import { track } from '../pixel';
@@ -34,7 +35,7 @@ export default function Product() {
   const { id = '' } = useParams();
   const catalog = useCatalog();
   const p = catalog.find(id);
-  const { add } = useStore();
+  const { add, cart } = useStore();
   // Photo affichée : index choisi à la main, ou -1 = suivre la photo de la couleur sélectionnée.
   const [img, setImg] = useState(-1);
   const [zoom, setZoom] = useState(false);
@@ -109,6 +110,12 @@ export default function Product() {
   const mainPhoto = variant?.imageUrl && img < 0 && variantPhoto < 0 ? variant.imageUrl : photos[shown];
   const ref = variant?.sku ?? p.sku;
   const buy = () => { if (canBuy) add(p.id, qty, variant?.id); };
+  /** Achat direct (publicités) : la montre va au panier, sans doublon si elle y est déjà, puis au formulaire de commande. */
+  const buyNow = () => {
+    if (!canBuy) return;
+    if (!cart.some((l) => l.id === p.id && (l.variantId ?? undefined) === (variant?.id ?? undefined))) add(p.id, qty, variant?.id);
+    navigate(PATHS.checkout);
+  };
 
   const pos = (e: React.MouseEvent<HTMLDivElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -240,7 +247,7 @@ export default function Product() {
               <QtyStepper qty={qty} h={56} onDec={() => setQty((q) => Math.max(1, q - 1))} onInc={() => setQty((q) => q + 1)} />
               <button className="btn btn-primary btn-tall" disabled={!canBuy} style={{ flex: 1, minWidth: 200, opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : p.purchasable ? 'Épuisé' : 'Non disponible à la vente'}</button>
             </div>
-            {canBuy && <button className="btn btn-outline btn-tall" onClick={() => { buy(); navigate(PATHS.checkout); }}>Acheter maintenant</button>}
+            {canBuy && <button className="btn btn-outline btn-tall" onClick={buyNow}>Acheter maintenant</button>}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {REASSURE.map((r) => (
                 <div key={r.t} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '13px 0', borderTop: '1px solid var(--line)', fontSize: 13.5 }}>
@@ -301,12 +308,23 @@ export default function Product() {
       )}
 
       {L.mobile && (
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(247,247,245,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</span>
-            <span style={{ fontSize: 14 }}>{fmt(price)}{variant && (p.options ?? []).length ? ' · ' + variant.values.map((v) => v.label).join(' · ') : ''}</span>
+        // Barre d'achat mobile : prix et coloris, ajout au panier (icône) et achat direct vers le formulaire de commande.
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(247,247,245,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 'none', maxWidth: '34%' }}>
+            <span style={{ fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(price)}</span>
+            {old != null && old > price && <span style={{ fontSize: 12, color: 'var(--graphite)', textDecoration: 'line-through' }}>{fmt(old)}</span>}
+            {variant && (p.options ?? []).length > 0 && <span style={{ fontSize: 12, color: 'var(--graphite)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{variant.values.map((v) => v.label).join(' · ')}</span>}
           </div>
-          <button className="btn btn-primary" disabled={!canBuy} style={{ marginLeft: 'auto', flex: 'none', height: 50, padding: '0 22px', fontSize: 11.5, letterSpacing: '.14em', opacity: canBuy ? 1 : 0.4 }} onClick={buy}>{canBuy ? 'Ajouter au panier' : p.purchasable ? 'Épuisé' : 'Non disponible'}</button>
+          {canBuy ? (
+            <>
+              <button className="btn btn-outline" onClick={buy} aria-label="Ajouter au panier" style={{ marginLeft: 'auto', flex: 'none', width: 50, height: 50, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <BagIcon size={20} />
+              </button>
+              <button className="btn btn-primary" onClick={buyNow} style={{ flex: 1, minWidth: 0, height: 50, padding: '0 12px', fontSize: 12, letterSpacing: '.1em', whiteSpace: 'nowrap' }}>Acheter maintenant</button>
+            </>
+          ) : (
+            <button className="btn btn-primary" disabled style={{ marginLeft: 'auto', flex: 1, height: 50, fontSize: 11.5, letterSpacing: '.14em', opacity: 0.4 }}>{p.purchasable ? 'Épuisé' : 'Non disponible'}</button>
+          )}
         </div>
       )}
     </>
