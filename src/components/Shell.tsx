@@ -237,10 +237,12 @@ export function Overlays() {
           })}
         </div>
         <div style={{ padding: '20px 24px 24px', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 12, background: '#fff' }}>
+          {s.qtyDiscount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{s.qtyLabel}</span><span>−{fmt(s.qtyDiscount)}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontSize: 14 }}>Sous-total · livraison incluse</span>
-            <span style={{ fontStretch: '110%', fontSize: 20, fontWeight: 500 }}>{fmt(s.subtotal)}</span>
+            <span style={{ fontSize: 14 }}>{s.qtyDiscount > 0 ? 'Total' : 'Sous-total'} · livraison incluse</span>
+            <span style={{ fontStretch: '110%', fontSize: 20, fontWeight: 500 }}>{fmt(s.subtotal - s.qtyDiscount)}</span>
           </div>
+          {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} montre{s.nextTier.missing > 1 ? 's' : ''} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
           <button className="btn btn-primary" disabled={s.count === 0} onClick={() => go(PATHS.checkout)} style={{ opacity: s.count === 0 ? 0.4 : 1 }}>Commander</button>
           <button className="btn btn-outline" style={{ height: 50 }} onClick={() => go(PATHS.cart)}>Voir le panier</button>
         </div>

@@ -212,6 +212,13 @@ export default function Product() {
                 </>
               )}
               <span style={{ flexBasis: '100%', fontSize: 12.5, color: 'var(--graphite)' }}>TTC · paiement à la livraison ou par virement</span>
+              {catalog.qtyTiers.length > 0 && p.purchasable && (
+                <span style={{ flexBasis: '100%', display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                  {catalog.qtyTiers.map((t) => (
+                    <span key={t.minQty} style={{ padding: '6px 12px', borderRadius: 999, background: '#111', color: '#fff', fontSize: 12.5 }}>−{fmt(t.amount)} dès {t.minQty} montres</span>
+                  ))}
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: canBuy ? '#111' : 'var(--faint)', boxShadow: '0 0 0 4px var(--line)' }} />{stockText}

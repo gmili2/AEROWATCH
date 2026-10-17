@@ -61,10 +61,12 @@ export default function Cart() {
           <aside style={{ position: L.sticky, top: 110, background: '#fff', border: '1px solid var(--line)', padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <span className="mono">Récapitulatif</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14.5 }}><span>Sous-total</span><span>{fmt(s.subtotal)}</span></div>
+            {s.qtyDiscount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14.5 }}><span>{s.qtyLabel}</span><span>−{fmt(s.qtyDiscount)}</span></div>}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 16, borderTop: '1px solid var(--line)' }}>
               <span style={{ fontWeight: 600 }}>Total TTC</span>
-              <span style={{ fontStretch: '110%', fontSize: 24, fontWeight: 500 }}>{fmt(s.subtotal)}</span>
+              <span style={{ fontStretch: '110%', fontSize: 24, fontWeight: 500 }}>{fmt(s.subtotal - s.qtyDiscount)}</span>
             </div>
+            {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} montre{s.nextTier.missing > 1 ? 's' : ''} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
             <button className="btn btn-primary btn-tall" style={{ marginTop: 8 }} onClick={() => navigate(PATHS.checkout)}>Passer commande</button>
             <span style={{ fontSize: 12.5, color: 'var(--graphite)', lineHeight: 1.5 }}>Livraison incluse partout au Maroc · Paiement à la livraison ou par virement bancaire</span>
           </aside>
@@ -89,7 +91,10 @@ function CartLoading() {
 
 type Field = { name: keyof Address; label: string; ph: string; type?: string; autoComplete?: string; list?: string };
 type Address = { name: string; phone: string; line1: string; city: string };
-type Quote = { subtotalCents: number; discountCents: number; totalCents: number; couponCode: string | null };
+type Quote = {
+  subtotalCents: number; discountCents: number; totalCents: number; couponCode: string | null;
+  discountLabel?: string | null; couponSkipped?: string | null; nextTier?: { missing: number; amountCents: number } | null;
+};
 type Confirmation = { number: string; totalCents: number };
 
 // Formulaire court : nom, téléphone, adresse, ville. Paiement à la livraison uniquement.
@@ -223,6 +228,7 @@ export function Checkout() {
                   onClick={() => { setCouponError(''); setCoupon(couponInput.trim().toUpperCase()); }}>Appliquer</button>
               </div>
               {couponError && <span role="alert" style={{ fontSize: 13, color: 'oklch(0.55 0.15 25)' }}>{couponError}</span>}
+              {quote?.couponSkipped && <span style={{ fontSize: 13, color: 'var(--graphite)' }}>Le code {quote.couponSkipped} n’est pas cumulable : votre {quote.discountLabel?.toLowerCase()}, plus avantageuse, est appliquée.</span>}
               {quote?.couponCode && <span style={{ fontSize: 13, color: 'var(--graphite)' }}>Code {quote.couponCode} appliqué · <button type="button" onClick={() => { setCoupon(''); setCouponInput(''); }} style={{ background: 'none', border: 0, padding: 0, textDecoration: 'underline', cursor: 'pointer', color: 'inherit', fontSize: 13 }}>retirer</button></span>}
             </div>
             <span style={{ fontSize: 13, color: 'var(--graphite)', lineHeight: 1.5 }}>Livraison incluse partout au Maroc. Paiement en espèces à la livraison : nous vous appelons pour confirmer la commande.</span>
@@ -248,7 +254,8 @@ export function Checkout() {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}><span>Sous-total</span><span>{fmt(quote ? quote.subtotalCents / 100 : s.subtotal)}</span></div>
-            {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>Code {quote?.couponCode}</span><span>−{fmt(discount)}</span></div>}
+            {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{quote?.discountLabel ?? `Code ${quote?.couponCode}`}</span><span>−{fmt(discount)}</span></div>}
+            {quote?.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {quote.nextTier.missing} montre{quote.nextTier.missing > 1 ? 's' : ''} et économisez <strong>{fmt(quote.nextTier.amountCents / 100)}</strong> sur votre commande.</span>}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid var(--line)' }}>
               <span style={{ fontWeight: 600 }}>Total TTC</span>
               <span style={{ fontStretch: '110%', fontSize: 22, fontWeight: 500 }}>{fmt(total)}</span>
