@@ -26,7 +26,7 @@ export function ProductCard({ p }: { p: Product }) {
   const needsChoice = p.variants.length > 1;
   const tilt = useTilt<HTMLDivElement>();
   return (
-    <article className="card" onClick={() => navigate(productPath(p.id))} style={{ display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', minWidth: 0 }}>
+    <article className="card pcard" onClick={() => navigate(productPath(p.id))} style={{ display: 'flex', flexDirection: 'column', gap: 16, cursor: 'pointer', minWidth: 0 }}>
       <div ref={tilt} className="ph tilt" style={{ aspectRatio: '4/5', backgroundImage: 'none', overflow: 'hidden' }}>
         <div className="ph zoom-hover" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: p.image ? 'var(--stone)' : 'transparent' }}>
           {p.image
@@ -55,21 +55,21 @@ export function ProductCard({ p }: { p: Product }) {
           // Avec plusieurs déclinaisons, le choix (couleur, bracelet…) se fait sur la fiche.
           onClick={(e) => { e.stopPropagation(); if (needsChoice) navigate(productPath(p.id)); else add(p.id, 1, p.variants[0]?.id); }}
           aria-label={needsChoice ? `Choisir les options de ${p.name}` : `Ajouter ${p.name} au panier`}
-          style={{ position: 'absolute', right: 10, bottom: 10, width: 44, height: 44, borderRadius: '50%', border: 0, background: 'var(--deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform .35s' }}
+          style={{ position: 'absolute', right: 10, bottom: 10, width: 44, height: 44, borderRadius: '50%', border: 0, background: 'var(--gold-grad)', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform .35s' }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.07)')}
           onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
         >
-          <BagIcon color="var(--cream)" size={18} />
+          <BagIcon color="#141310" size={18} />
         </button>}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="pcard-body" style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         <span className="mono" style={{ fontSize: 10, letterSpacing: '.14em' }}>{p.kind}</span>
         {/* Vrai lien (et pas seulement le clic sur la carte) : les moteurs de recherche suivent les liens pour trouver les fiches. */}
-        <h3 style={{ margin: 0, fontStretch: '115%', fontWeight: 600, fontSize: 15, textTransform: 'uppercase', letterSpacing: '.01em' }}>
+        <h3 style={{ margin: 0, fontFamily: 'var(--serif)', fontWeight: 600, fontSize: 21, lineHeight: 1.15, textTransform: 'uppercase', letterSpacing: '.03em' }}>
           <Link to={productPath(p.id)} onClick={(e) => e.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none' }}>{p.name}</Link>
         </h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: 10, fontSize: 15 }}>
-          <span>{p.hasRange ? 'dès ' : ''}{fmt(p.price)}</span>
+          <span className="price">{p.hasRange ? 'dès ' : ''}{fmt(p.price)}</span>
           {p.old && <span style={{ fontSize: 13, color: 'var(--graphite)', textDecoration: 'line-through' }}>{fmt(p.old)}</span>}
         </div>
         {p.swatches.length > 1 && (
@@ -81,7 +81,7 @@ export function ProductCard({ p }: { p: Product }) {
           </div>
         )}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: 'var(--graphite)' }}>
-          <span style={{ color: 'var(--ink)', letterSpacing: '.1em' }} aria-label={`Note ${p.rating} sur 5`}>{stars(p.rating)}</span>
+          <span style={{ color: 'var(--gold)', letterSpacing: '.1em' }} aria-label={`Note ${p.rating} sur 5`}>{stars(p.rating)}</span>
           <span>({p.reviews})</span>
         </div>
       </div>

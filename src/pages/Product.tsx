@@ -396,7 +396,7 @@ export default function Product() {
 
       {L.mobile && (
         // Barre d'achat mobile : prix et coloris, ajout au panier (icône) et achat direct vers le formulaire de commande.
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(12,12,11,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(23,24,26,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 'none', maxWidth: '34%' }}>
             <span style={{ fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(packTotal)}</span>
             {packTotal < packSum

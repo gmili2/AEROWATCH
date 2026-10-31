@@ -56,7 +56,7 @@ export function Header() {
   const { openSearch, openMenu } = useStore();
   const wrap: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 40,
-    background: 'rgba(12,12,11,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+    background: 'rgba(23,24,26,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
     borderBottom: '1px solid var(--line)',
   };
   if (L.mobile) {
@@ -117,7 +117,7 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   return (
-    <footer style={{ background: 'var(--deep)', color: 'var(--cream)', padding: `${L.sec} ${L.px} 28px`, display: 'flex', flexDirection: 'column', gap: 56 }}>
+    <footer style={{ background: 'var(--deep)', borderTop: '1px solid rgba(207,169,94,.35)', color: 'var(--cream)', padding: `${L.sec} ${L.px} 28px`, display: 'flex', flexDirection: 'column', gap: 56 }}>
       <div style={{ display: 'grid', gridTemplateColumns: L.footCols, gap: 40 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22, gridColumn: L.footSpan }}>
           <Logo size={56} wordmark />

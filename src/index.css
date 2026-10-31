@@ -1,23 +1,24 @@
 /* AERO WATCH — thème nuit : noir profond, ivoire, or et vert sapin */
 :root {
   color-scheme: dark;
-  --ink: #ece5d5;          /* texte principal (ivoire) */
-  --cream: #f3ecdc;        /* texte sur fond sombre */
-  --ivory: #0c0c0b;        /* fond de page */
-  --white: #141412;
-  --surface: #151513;      /* cartes, encadrés */
-  --deep: #070707;         /* sections les plus sombres */
-  --stone: #1a1917;        /* fonds image */
-  --line: #262420;
-  --line-strong: #3a3730;
-  --line-dark: #24231f;
+  --ink: #efe8d8;          /* texte principal (ivoire) */
+  --cream: #f5eedf;        /* texte sur fond sombre */
+  --ivory: #17181a;        /* fond de page (anthracite) */
+  --white: #1f2023;
+  --surface: #202124;      /* cartes, encadrés */
+  --deep: #0f1d17;         /* sections foncées : vert sapin nuit */
+  --stone: #26272a;        /* fonds image */
+  --line: #313236;
+  --line-strong: #46464a;
+  --line-dark: rgba(201,164,92,.18);
   --graphite: #a8a294;
   --muted: #b9b3a5;
   --body: #d2ccbe;
   --faint: #6f6a5f;
-  --gold: #c9a45c;
-  --gold-soft: #e0c48a;
-  --green: #142a20;
+  --gold: #cfa95e;
+  --gold-soft: #e6cb92;
+  --gold-grad: linear-gradient(135deg, #f0d79c 0%, #cfa95e 45%, #9c7a3a 100%);
+  --green: #173226;
   --green-text: #c9bf98;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -95,7 +96,7 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
   cursor: pointer;
   transition: background 0.4s, color 0.4s, border-color 0.4s, transform 0.4s;
 }
-.btn-primary, .btn-light { background: var(--gold); color: #0c0c0b; border-color: var(--gold); }
+.btn-primary, .btn-light { background: var(--gold-grad); color: #141310; border-color: var(--gold); box-shadow: 0 8px 24px rgba(207,169,94,.18); }
 .btn-primary:hover, .btn-light:hover { background: var(--gold-soft); border-color: var(--gold-soft); color: #0c0c0b; transform: translateY(-1px); }
 .btn-primary svg, .btn-light svg { stroke: #0c0c0b; }
 .btn-outline, .btn-ghost-light { background: transparent; color: var(--ink); border-color: rgba(201,164,92,.55); }
@@ -160,6 +161,33 @@ input::placeholder, textarea::placeholder { color: var(--faint); }
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Cartes produits : cadre fin, filet doré au survol */
+.pcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 10px 10px 18px;
+  transition: border-color .5s var(--ease), transform .5s var(--ease), box-shadow .5s var(--ease);
+}
+.pcard:hover { border-color: rgba(207,169,94,.55); transform: translateY(-3px); box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+.pcard-body { padding: 0 6px; }
+.price { color: var(--gold-soft); font-weight: 600; }
+
+/* Titre de section : petit filet doré sous le titre */
+.display.ruled::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 1px;
+  margin-top: 18px;
+  background: var(--gold-grad);
+}
+.gold-text {
+  background: var(--gold-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* Placeholders photo (en attendant les vraies images produit) */

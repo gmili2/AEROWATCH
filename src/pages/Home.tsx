@@ -27,11 +27,11 @@ function HeroNoir({ L }: { L: Layout }) {
   const hero = products.find((p) => p.purchasable && p.image) ?? products.find((p) => p.image) ?? products[0];
   const tilt = useTilt<HTMLButtonElement>(9);
   return (
-    <section style={{ background: 'radial-gradient(900px 600px at 78% 40%, rgba(20,42,32,.55), transparent 70%), var(--ivory)', color: 'var(--cream)' }}>
+    <section style={{ background: 'radial-gradient(900px 640px at 78% 42%, rgba(30,74,54,.55), transparent 70%), radial-gradient(600px 400px at 0% 100%, rgba(207,169,94,.07), transparent 70%), var(--ivory)', color: 'var(--cream)' }}>
       <div style={{ display: 'grid', gridTemplateColumns: L.split, gap: L.heroGap, alignItems: 'center', padding: `${L.heroPad} ${L.px}` }}>
         <div data-reveal style={{ display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 600 }}>
           <span className="mono" style={{ letterSpacing: '.22em' }}>Collection Nocturne — 2026</span>
-          <h1 className="display" style={{ lineHeight: 0.98, fontSize: L.h1 }}>Le temps,<br />à haute altitude.</h1>
+          <h1 className="display" style={{ lineHeight: 0.98, fontSize: L.h1 }}>Le temps,<br /><span className="gold-text">à haute altitude.</span></h1>
           <p style={{ margin: 0, fontSize: 18, lineHeight: 1.65, color: 'var(--body)', maxWidth: 470, textWrap: 'pretty' }}>
             Montres automatiques et classiques, choisies et contrôlées une à une. Garanties deux ans, livrées assurées.
           </p>
@@ -102,7 +102,7 @@ function Showcase3D({ L }: { L: Layout }) {
     <section style={{ marginTop: L.sec, background: 'var(--deep)', color: 'var(--cream)', padding: `${L.sec} ${L.px}`, display: 'grid', gridTemplateColumns: L.split, gap: L.pGap, alignItems: 'center', overflow: 'hidden' }}>
       <div data-reveal style={{ display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 480 }}>
         <span className="mono" style={{ color: 'var(--graphite)' }}>En détail</span>
-        <h2 className="display" style={{ fontSize: L.h2 }}>Faites-la tourner.</h2>
+        <h2 className="display ruled" style={{ fontSize: L.h2 }}>Faites-la tourner.</h2>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.7, color: 'var(--body)' }}>
           Glissez pour faire pivoter la montre. Ses aiguilles donnent l’heure exacte.
         </p>
@@ -148,7 +148,7 @@ export default function Home() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <span className="mono">Collections</span>
-            <h2 className="display" style={{ fontSize: L.h2 }}>Trouver sa montre</h2>
+            <h2 className="display ruled" style={{ fontSize: L.h2 }}>Trouver sa montre</h2>
           </div>
           <Link className="link-underline" to={PATHS.collections}>Toutes les collections</Link>
         </div>
@@ -159,7 +159,7 @@ export default function Home() {
         <div data-reveal style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <span className="mono">La sélection</span>
-            <h2 className="display" style={{ fontSize: L.h2 }}>Nos montres</h2>
+            <h2 className="display ruled" style={{ fontSize: L.h2 }}>Nos montres</h2>
           </div>
           <div role="tablist" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {TABS.map(([id, label]) => (
@@ -175,7 +175,7 @@ export default function Home() {
 
       <Showcase3D L={L} />
 
-      <section data-reveal style={{ marginTop: L.sec, padding: `${L.sec} ${L.px}`, background: 'var(--surface)', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, textAlign: 'center' }}>
+      <section data-reveal style={{ marginTop: L.sec, padding: `${L.sec} ${L.px}`, background: 'radial-gradient(700px 400px at 50% 0%, rgba(207,169,94,.10), transparent 70%), var(--green)', borderTop: '1px solid var(--line-dark)', borderBottom: '1px solid var(--line-dark)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 40, textAlign: 'center' }}>
         <Logo size={96} />
         <p style={{ margin: 0, maxWidth: 820, fontStretch: '115%', fontWeight: 400, fontSize: L.quote, lineHeight: 1.35, textWrap: 'balance' }}>
           Chaque montre est choisie comme un instrument de bord : pour sa précision, sa lisibilité et sa tenue dans le temps.
@@ -197,7 +197,7 @@ export default function Home() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22, maxWidth: 480 }}>
           <span className="mono">La Maison</span>
-          <h2 className="display" style={{ fontSize: L.h2 }}>Contrôlée à la main, avant de partir.</h2>
+          <h2 className="display ruled" style={{ fontSize: L.h2 }}>Contrôlée à la main, avant de partir.</h2>
           <p style={{ margin: 0, fontSize: 16, lineHeight: 1.7, color: 'var(--body)' }}>
             Chaque pièce passe par notre atelier : vérification de la marche, de l’étanchéité et des finitions. Puis elle rejoint son écrin, avec son certificat.
           </p>
