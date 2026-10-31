@@ -78,7 +78,7 @@ jobs:
       SSH_USER: ${{ secrets.SSH_USER }}
       SSH_PORT: ${{ vars.SSH_PORT || '21098' }}
       SITE_DIR: ${{ vars.SITE_DIR || 'public_html' }}
-      APP_DIR: ${{ vars.APP_DIR || 'gmbijoux-api' }}
+      APP_DIR: ${{ vars.APP_DIR || 'aerowatch-api' }}
       NODE_MAJOR: ${{ vars.NODE_MAJOR || '22' }}
       SITE_URL: ${{ vars.SITE_URL }}
       BOOTSTRAP_ARGS: ${{ (inputs.with_catalog || vars.BOOTSTRAP_WITH_CATALOG == 'true') && '--with-catalog' || '' }}

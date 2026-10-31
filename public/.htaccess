@@ -1,4 +1,4 @@
-# GMBIJOUX — site (Vite) sur hébergement cPanel Namecheap.
+# AERO WATCH — site (Vite) sur hébergement cPanel Namecheap.
 # Copié tel quel dans dist/ à la construction, puis déployé dans le dossier du domaine.
 DirectoryIndex index.html
 Options -Indexes
@@ -6,9 +6,9 @@ Options -Indexes
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Adresse unique : https://gmbijoux.store (sans www). L'ancienne adresse y est redirigée.
-  RewriteCond %{HTTP_HOST} ^(www\.gmbijoux\.store|gmbijoux\.mygympro\.club)$ [NC]
-  RewriteRule ^ https://gmbijoux.store%{REQUEST_URI} [L,R=301]
+  # Adresse unique sans www (à adapter au domaine définitif).
+  RewriteCond %{HTTP_HOST} ^www\.aerowatch\.store$ [NC]
+  RewriteRule ^ https://aerowatch.store%{REQUEST_URI} [L,R=301]
   RewriteCond %{HTTPS} off
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

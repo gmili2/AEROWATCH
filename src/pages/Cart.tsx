@@ -37,7 +37,7 @@ export default function Cart() {
                   <Link to={productPath(p.id)} className="ph" aria-label={p.name} style={{ aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {l.image
                       ? <img src={l.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={{ width: '50%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />}
+                      : <span style={{ width: '50%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(239,232,216,.17)' }} />}
                   </Link>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
@@ -58,7 +58,7 @@ export default function Cart() {
               );
             })}
           </div>
-          <aside style={{ position: L.sticky, top: 110, background: '#fff', border: '1px solid var(--line)', padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <aside style={{ position: L.sticky, top: 110, background: 'var(--surface)', border: '1px solid var(--line)', padding: 28, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <span className="mono">Récapitulatif</span>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14.5 }}><span>Sous-total</span><span>{fmt(s.subtotal)}</span></div>
             {s.qtyDiscount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14.5 }}><span>{s.qtyLabel}</span><span>−{fmt(s.qtyDiscount)}</span></div>}
@@ -66,7 +66,7 @@ export default function Cart() {
               <span style={{ fontWeight: 600 }}>Total TTC</span>
               <span style={{ fontStretch: '110%', fontSize: 24, fontWeight: 500 }}>{fmt(s.subtotal - s.qtyDiscount)}</span>
             </div>
-            {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} {s.nextTier.productName ?? `montre${s.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
+            {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: 'var(--stone)', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} {s.nextTier.productName ?? `montre${s.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
             <button className="btn btn-primary btn-tall" style={{ marginTop: 8 }} onClick={() => navigate(PATHS.checkout)}>Passer commande</button>
             <span style={{ fontSize: 12.5, color: 'var(--graphite)', lineHeight: 1.5 }}>Livraison incluse partout au Maroc · Paiement à la livraison ou par virement bancaire</span>
           </aside>
@@ -204,10 +204,10 @@ export function Checkout() {
 
       {done ? (
         <div data-reveal style={{ padding: '56px 0', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 20 }}>
-          <img src="/logo.png" alt="" style={{ width: 88, height: 88, objectFit: 'contain', mixBlendMode: 'multiply' }} />
+          <img src="/logo.png" alt="" style={{ width: 88, height: 88, objectFit: 'contain', borderRadius: '50%' }} />
           <h2 className="display" style={{ fontSize: L.h3 }}>Merci, votre commande est enregistrée.</h2>
           <p style={{ margin: 0, maxWidth: 520, fontSize: 15.5, lineHeight: 1.65, color: 'var(--muted)' }}>
-            Commande <strong style={{ color: '#111' }}>{done.number}</strong> · {fmt(done.totalCents / 100)}.{' '}
+            Commande <strong style={{ color: 'var(--ink)' }}>{done.number}</strong> · {fmt(done.totalCents / 100)}.{' '}
             Notre équipe vous appelle pour la confirmer ; vous réglerez en espèces à la remise du colis.
           </p>
           <Link className="btn btn-primary" to={shopPath('all')}>Continuer la visite</Link>
@@ -234,7 +234,7 @@ export function Checkout() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <input value={couponInput} onChange={(e) => { setCouponInput(e.target.value); setCouponError(''); }} placeholder="BIENVENUE10" aria-label="Code promo"
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setCouponError(''); setCoupon(couponInput.trim().toUpperCase()); } }}
-                  style={{ flex: 1, minWidth: 0, height: 50, padding: '0 16px', border: '1px solid var(--line-strong)', background: '#fff', fontSize: 14.5, fontFamily: 'var(--mono)', textTransform: 'uppercase' }} />
+                  style={{ flex: 1, minWidth: 0, height: 50, padding: '0 16px', border: '1px solid var(--line-strong)', background: 'var(--surface)', fontSize: 14.5, fontFamily: 'var(--mono)', textTransform: 'uppercase' }} />
                 <button type="button" className="btn btn-outline" style={{ height: 50, padding: '0 22px' }}
                   onClick={() => { setCouponError(''); setCoupon(couponInput.trim().toUpperCase()); }}>Appliquer</button>
               </div>
@@ -252,11 +252,11 @@ export function Checkout() {
               {busy ? 'Enregistrement…' : `Valider la commande · ${fmt(total)}`}
             </button>
           </form>
-          <aside style={{ position: L.sticky, top: 110, background: '#fff', border: '1px solid var(--line)', padding: 26, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <aside style={{ position: L.sticky, top: 110, background: 'var(--surface)', border: '1px solid var(--line)', padding: 26, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <span className="mono">Votre commande</span>
             {s.items.map((l) => (
               <div key={l.key} style={{ display: 'grid', gridTemplateColumns: '56px minmax(0,1fr) auto', gap: 14, alignItems: 'center' }}>
-                <span className="ph" style={{ aspectRatio: '1', backgroundImage: l.image ? `url("${l.image}")` : 'repeating-linear-gradient(135deg,rgba(17,17,17,.05) 0 1px,transparent 1px 7px)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                <span className="ph" style={{ aspectRatio: '1', backgroundImage: l.image ? `url("${l.image}")` : 'repeating-linear-gradient(135deg,rgba(239,232,216,.05) 0 1px,transparent 1px 7px)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontSize: 13.5, fontWeight: 600, textTransform: 'uppercase' }}>{l.product.name}</span>
                   <span style={{ fontSize: 12.5, color: 'var(--graphite)' }}>{l.label ? l.label + ' · ' : ''}Qté {l.qty}</span>
@@ -266,7 +266,7 @@ export function Checkout() {
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}><span>Sous-total</span><span>{fmt(quote ? quote.subtotalCents / 100 : s.subtotal)}</span></div>
             {discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{quote?.discountLabel ?? `Code ${quote?.couponCode}`}</span><span>−{fmt(discount)}</span></div>}
-            {quote?.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {quote.nextTier.missing} {quote.nextTier.productName ?? `montre${quote.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(quote.nextTier.amountCents / 100)}</strong> sur votre commande.</span>}
+            {quote?.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: 'var(--stone)', lineHeight: 1.4 }}>Ajoutez {quote.nextTier.missing} {quote.nextTier.productName ?? `montre${quote.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(quote.nextTier.amountCents / 100)}</strong> sur votre commande.</span>}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingTop: 14, borderTop: '1px solid var(--line)' }}>
               <span style={{ fontWeight: 600 }}>Total TTC</span>
               <span style={{ fontStretch: '110%', fontSize: 22, fontWeight: 500 }}>{fmt(total)}</span>

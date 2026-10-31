@@ -16,29 +16,25 @@ const NAV: { label: string; to: string; match: (path: string) => boolean }[] = [
   { label: 'Contact', to: PATHS.contact, match: (p) => p === PATHS.contact },
 ];
 
-export function Logo({ size, light }: { size: number; light?: boolean }) {
+/** Emblème AERO WATCH ; `wordmark` ajoute le nom de la maison à droite (WATCH en or). */
+export function Logo({ size, wordmark }: { size: number; light?: boolean; wordmark?: boolean }) {
+  const img = <img src="/aero-emblem.png" alt={wordmark ? '' : 'AERO WATCH'} width={size} height={size} style={{ width: size, height: size, objectFit: 'contain', borderRadius: '50%' }} />;
+  if (!wordmark) return img;
   return (
-    <img
-      src="/logo.png"
-      alt="GMBIJOUX"
-      width={size}
-      height={size}
-      style={{
-        width: size,
-        height: size,
-        objectFit: 'contain',
-        mixBlendMode: light ? 'screen' : 'multiply',
-        filter: light ? 'invert(1)' : undefined,
-      }}
-    />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.28) }}>
+      {img}
+      <span style={{ fontFamily: 'var(--serif)', fontWeight: 600, fontSize: Math.round(size * 0.46), letterSpacing: '.2em', whiteSpace: 'nowrap', lineHeight: 1 }}>
+        <span style={{ color: 'var(--cream)' }}>AERO</span> <span style={{ color: 'var(--gold)' }}>WATCH</span>
+      </span>
+    </span>
   );
 }
 
 export function TopBar() {
   const L = useLayout();
   return (
-    <div style={{ background: '#111', color: '#fff', padding: '10px 20px', display: 'flex', justifyContent: 'center', gap: 24, fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.14em', textTransform: 'uppercase' }}>
-      <span>Livraison incluse</span>
+    <div style={{ background: 'var(--green)', color: 'var(--green-text)', padding: '11px 20px', display: 'flex', justifyContent: 'center', gap: 36, fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase' }}>
+      <span>Livraison assurée offerte</span>
       {L.desktop && (<><span>Garantie 2 ans</span><span>Retours 30 jours</span><span>Paiement à la livraison</span></>)}
     </div>
   );
@@ -60,17 +56,17 @@ export function Header() {
   const { openSearch, openMenu } = useStore();
   const wrap: React.CSSProperties = {
     position: 'sticky', top: 0, zIndex: 40,
-    background: 'rgba(247,247,245,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
+    background: 'rgba(12,12,11,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)',
     borderBottom: '1px solid var(--line)',
   };
   if (L.mobile) {
     return (
       <header style={wrap}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', height: 64, padding: '0 10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', alignItems: 'center', height: 64, padding: '0 6px' }}>
           <div style={{ display: 'flex' }}>
             <button className="icon-btn" onClick={openMenu} aria-label="Menu"><MenuIcon /></button>
           </div>
-          <Link to="/" aria-label="GMBIJOUX — accueil" style={{ display: 'flex' }}><Logo size={46} /></Link>
+          <Link to="/" aria-label="AERO WATCH — accueil" style={{ display: 'flex', justifyContent: 'center' }}><Logo size={34} wordmark /></Link>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button className="icon-btn" onClick={openSearch} aria-label="Rechercher"><SearchIcon /></button>
             <CartButton />
@@ -81,25 +77,25 @@ export function Header() {
   }
   return (
     <header style={wrap}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 32, height: 84, padding: `0 ${L.px}` }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 32, height: 104, padding: `0 ${L.px}` }}>
         <nav style={{ display: 'flex', gap: 28, whiteSpace: 'nowrap' }} aria-label="Navigation principale">
           {NAV.map((n) => (
             <Link
               key={n.label}
               to={n.to}
               style={{
-                borderBottom: `1px solid ${n.match(pathname) ? '#111' : 'transparent'}`,
-                padding: '6px 0', fontSize: 11.5, fontWeight: 500, letterSpacing: '.16em', textTransform: 'uppercase',
-                color: '#111', transition: 'border-color .4s ease',
+                borderBottom: `1.5px solid ${n.match(pathname) ? 'var(--gold)' : 'transparent'}`,
+                padding: '6px 0', fontSize: 12.5, fontWeight: 500, letterSpacing: '.2em', textTransform: 'uppercase',
+                color: 'var(--ink)', transition: 'border-color .4s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderBottomColor = '#111')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderBottomColor = n.match(pathname) ? '#111' : 'transparent')}
+              onMouseEnter={(e) => (e.currentTarget.style.borderBottomColor = 'var(--gold)')}
+              onMouseLeave={(e) => (e.currentTarget.style.borderBottomColor = n.match(pathname) ? 'var(--gold)' : 'transparent')}
             >
               {n.label}
             </Link>
           ))}
         </nav>
-        <Link to="/" aria-label="GMBIJOUX — accueil" style={{ display: 'flex' }}><Logo size={62} /></Link>
+        <Link to="/" aria-label="AERO WATCH — accueil" style={{ display: 'flex' }}><Logo size={70} wordmark /></Link>
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
           <button className="icon-btn" onClick={openSearch} aria-label="Rechercher"><SearchIcon /></button>
           <Link className="icon-btn" to={PATHS.account} aria-label="Mon compte"><UserIcon /></Link>
@@ -121,11 +117,11 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   return (
-    <footer style={{ background: '#111', color: '#fff', padding: `${L.sec} ${L.px} 28px`, display: 'flex', flexDirection: 'column', gap: 56 }}>
+    <footer style={{ background: 'var(--deep)', color: 'var(--cream)', padding: `${L.sec} ${L.px} 28px`, display: 'flex', flexDirection: 'column', gap: 56 }}>
       <div style={{ display: 'grid', gridTemplateColumns: L.footCols, gap: 40 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 22, gridColumn: L.footSpan }}>
-          <Logo size={76} light />
-          <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: '#B5B5AF', maxWidth: 320 }}>
+          <Logo size={56} wordmark />
+          <p style={{ margin: 0, fontSize: 14.5, lineHeight: 1.6, color: 'var(--graphite)', maxWidth: 320 }}>
             {subscribed ? 'Merci, vous êtes inscrit·e à la newsletter.' : 'Recevez les nouveautés en avant-première, une fois par mois.'}
           </p>
           {!subscribed && (
@@ -136,24 +132,24 @@ export function Footer() {
               <input
                 type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                 placeholder="Votre e-mail" aria-label="Votre e-mail"
-                style={{ flex: 1, minWidth: 0, height: 48, background: 'transparent', border: 0, color: '#fff', fontSize: 15, outline: 'none' }}
+                style={{ flex: 1, minWidth: 0, height: 48, background: 'transparent', border: 0, color: 'var(--cream)', fontSize: 15, outline: 'none' }}
               />
-              <button type="submit" style={{ background: 'none', border: 0, color: '#fff', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, letterSpacing: '.16em', textTransform: 'uppercase' }}>S’inscrire</button>
+              <button type="submit" style={{ background: 'none', border: 0, color: 'var(--cream)', cursor: 'pointer', fontSize: 11.5, fontWeight: 600, letterSpacing: '.16em', textTransform: 'uppercase' }}>S’inscrire</button>
             </form>
           )}
         </div>
         {FOOTER.map((g) => (
           <div key={g.t} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <span className="mono" style={{ fontSize: 10.5, color: '#8C8C86' }}>{g.t}</span>
+            <span className="mono" style={{ fontSize: 10.5, color: 'var(--faint)' }}>{g.t}</span>
             {g.links.map(([label, to]) => (
-              <Link key={label} to={to} style={{ color: '#E0E0DC', fontSize: 14.5, padding: '2px 0' }}>{label}</Link>
+              <Link key={label} to={to} style={{ color: 'var(--body)', fontSize: 14.5, padding: '2px 0' }}>{label}</Link>
             ))}
           </div>
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingTop: 24, borderTop: '1px solid #2A2A2A', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', color: '#8C8C86' }}>
-        <span>© 2026 GMBIJOUX — Tous droits réservés</span>
-        <span style={{ display: 'flex', gap: 20 }}><span>Paiement à la livraison · Virement bancaire</span><Link to={PATHS.admin} style={{ color: '#8C8C86' }}>Administration</Link></span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, paddingTop: 24, borderTop: '1px solid var(--line-dark)', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--faint)' }}>
+        <span>© 2026 AERO WATCH — Tous droits réservés</span>
+        <span style={{ display: 'flex', gap: 20 }}><span>Paiement à la livraison · Virement bancaire</span><Link to={PATHS.admin} style={{ color: 'var(--faint)' }}>Administration</Link></span>
       </div>
     </footer>
   );
@@ -162,7 +158,7 @@ export function Footer() {
 function QtyStepper({ qty, onDec, onInc, h = 36 }: { qty: number; onDec: () => void; onInc: () => void; h?: number }) {
   const b: React.CSSProperties = { width: h - 2, height: h - 2, border: 0, background: 'none', cursor: 'pointer', fontSize: 16 };
   return (
-    <div style={{ display: 'flex', alignItems: 'center', height: h, border: '1px solid var(--line-strong)', borderRadius: 999, background: '#fff' }}>
+    <div style={{ display: 'flex', alignItems: 'center', height: h, border: '1px solid var(--line-strong)', borderRadius: 999, background: 'var(--surface)' }}>
       <button style={b} onClick={onDec} aria-label="Diminuer la quantité">−</button>
       <span style={{ minWidth: 16, textAlign: 'center', fontSize: 13.5 }}>{qty}</span>
       <button style={b} onClick={onInc} aria-label="Augmenter la quantité">+</button>
@@ -196,7 +192,7 @@ export function Overlays() {
     <>
       <div
         onClick={s.closeAll}
-        style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(17,17,17,.38)', opacity: anyOverlay ? 1 : 0, pointerEvents: anyOverlay ? 'auto' : 'none', transition: 'opacity .5s ease' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,.62)', opacity: anyOverlay ? 1 : 0, pointerEvents: anyOverlay ? 'auto' : 'none', transition: 'opacity .5s ease' }}
       />
 
       {/* Panier latéral */}
@@ -217,7 +213,7 @@ export function Overlays() {
                 <button className="ph" onClick={() => go(productPath(p.id))} aria-label={p.name} style={{ aspectRatio: '1', border: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                   {l.image
                     ? <img src={l.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                    : <span style={{ width: '52%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.17)' }} />}
+                    : <span style={{ width: '52%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(239,232,216,.17)' }} />}
                 </button>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
@@ -236,13 +232,13 @@ export function Overlays() {
             );
           })}
         </div>
-        <div style={{ padding: '20px 24px 24px', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 12, background: '#fff' }}>
+        <div style={{ padding: '20px 24px 24px', borderTop: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 12, background: 'var(--surface)' }}>
           {s.qtyDiscount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}><span>{s.qtyLabel}</span><span>−{fmt(s.qtyDiscount)}</span></div>}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span style={{ fontSize: 14 }}>{s.qtyDiscount > 0 ? 'Total' : 'Sous-total'} · livraison incluse</span>
             <span style={{ fontStretch: '110%', fontSize: 20, fontWeight: 500 }}>{fmt(s.subtotal - s.qtyDiscount)}</span>
           </div>
-          {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: '#F2F2EF', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} {s.nextTier.productName ?? `montre${s.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
+          {s.nextTier && <span style={{ fontSize: 13, padding: '10px 12px', background: 'var(--stone)', lineHeight: 1.4 }}>Ajoutez {s.nextTier.missing} {s.nextTier.productName ?? `montre${s.nextTier.missing > 1 ? 's' : ''}`} et économisez <strong>{fmt(s.nextTier.amount)}</strong> sur votre commande.</span>}
           <button className="btn btn-primary" disabled={s.count === 0} onClick={() => go(PATHS.checkout)} style={{ opacity: s.count === 0 ? 0.4 : 1 }}>Commander</button>
           <button className="btn btn-outline" style={{ height: 50 }} onClick={() => go(PATHS.cart)}>Voir le panier</button>
         </div>
@@ -251,16 +247,16 @@ export function Overlays() {
       {/* Menu mobile */}
       <div
         aria-hidden={!s.menu}
-        style={{ position: 'fixed', inset: 0, zIndex: 80, background: '#111', color: '#fff', display: 'flex', flexDirection: 'column', padding: '12px 20px 32px', opacity: s.menu ? 1 : 0, pointerEvents: s.menu ? 'auto' : 'none', transition: 'opacity .45s ease', visibility: s.menu ? 'visible' : 'hidden' }}
+        style={{ position: 'fixed', inset: 0, zIndex: 80, background: 'var(--deep)', color: 'var(--cream)', display: 'flex', flexDirection: 'column', padding: '12px 20px 32px', opacity: s.menu ? 1 : 0, pointerEvents: s.menu ? 'auto' : 'none', transition: 'opacity .45s ease', visibility: s.menu ? 'visible' : 'hidden' }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 52 }}>
-          <Logo size={44} light />
-          <button className="icon-btn" onClick={s.closeAll} aria-label="Fermer" style={{ background: 'transparent' }}><CloseIcon color="#fff" size={20} /></button>
+          <Logo size={38} wordmark />
+          <button className="icon-btn" onClick={s.closeAll} aria-label="Fermer" style={{ background: 'transparent' }}><CloseIcon color="var(--cream)" size={20} /></button>
         </div>
         <nav style={{ display: 'flex', flexDirection: 'column', marginTop: 36 }}>
           {NAV.map((n) => (
-            <button key={n.label} onClick={() => go(n.to)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0', background: 'none', border: 0, borderBottom: '1px solid #2A2A2A', color: '#fff', cursor: 'pointer', fontStretch: '125%', fontWeight: 500, textTransform: 'uppercase', fontSize: 24, textAlign: 'left' }}>
-              {n.label}<ArrowIcon color="#fff" />
+            <button key={n.label} onClick={() => go(n.to)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 0', background: 'none', border: 0, borderBottom: '1px solid var(--line-dark)', color: 'var(--cream)', cursor: 'pointer', fontStretch: '125%', fontWeight: 500, textTransform: 'uppercase', fontSize: 24, textAlign: 'left' }}>
+              {n.label}<ArrowIcon color="var(--cream)" />
             </button>
           ))}
         </nav>
@@ -275,13 +271,13 @@ export function Overlays() {
         role="search" aria-hidden={!s.search}
         style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 75, background: 'var(--ivory)', borderBottom: '1px solid var(--line)', padding: `20px ${L.px} 28px`, transform: s.search ? 'translateY(0)' : 'translateY(-105%)', transition: 'transform .55s var(--ease)', visibility: s.search ? 'visible' : 'hidden', transitionProperty: 'transform, visibility' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid #111', paddingBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, borderBottom: '1px solid var(--ink)', paddingBottom: 10 }}>
           <SearchIcon size={22} />
           <input
             ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter' && results[0]) go(productPath(results[0].id)); }}
             placeholder="Rechercher une montre, une collection…" aria-label="Rechercher"
-            style={{ flex: 1, minWidth: 0, height: 48, border: 0, background: 'transparent', fontSize: L.searchFs, fontStretch: '110%', outline: 'none', color: '#111' }}
+            style={{ flex: 1, minWidth: 0, height: 48, border: 0, background: 'transparent', fontSize: L.searchFs, fontStretch: '110%', outline: 'none', color: 'var(--ink)' }}
           />
           <button className="icon-btn" onClick={s.closeAll} aria-label="Fermer"><CloseIcon /></button>
         </div>

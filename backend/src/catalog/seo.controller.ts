@@ -18,7 +18,7 @@ import { VISIBLE } from './visibility';
  * complété du titre, de la description, de la photo, du prix et des données structurées de la page.
  */
 
-const SHOP = 'GMBIJOUX';
+const SHOP = 'AERO WATCH';
 const PITCH = 'Livraison gratuite partout au Maroc, paiement à la livraison.';
 
 /** Pages de la boutique (mêmes adresses que src/routes.ts du site). */
@@ -52,7 +52,7 @@ export class SeoController {
   constructor(private prisma: PrismaService, private pricing: PricingService, private access: SiteAccess, private config: ConfigService) {}
 
   private get origin() {
-    return (this.config.get<string[]>('FRONTEND_URL') ?? [])[0]?.replace(/\/$/, '') || 'https://gmbijoux.store';
+    return (this.config.get<string[]>('FRONTEND_URL') ?? [])[0]?.replace(/\/$/, '') || 'https://aerowatch.store';
   }
   private abs(url: string) {
     // Photos de l'admin : adresse servie directement par le serveur web (voir src/catalog.tsx du site).

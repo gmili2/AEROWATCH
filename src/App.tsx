@@ -54,13 +54,13 @@ export default function App() {
     closeAll();
     // Fiche montre : balises posées par la page elle-même (nom, prix, description).
     if (pathname.startsWith('/montre/')) return;
-    if (pathname.startsWith(PATHS.admin)) { setMeta({ title: 'Administration — GMBIJOUX', path: pathname, noindex: true }); return; }
+    if (pathname.startsWith(PATHS.admin)) { setMeta({ title: 'Administration — AERO WATCH', path: pathname, noindex: true }); return; }
     if (pathname === '/') { setMeta({ title: HOME_TITLE, path: '/' }); return; }
     const shop = SHOP_TITLES[pathname];
     const t = shop ?? TITLES[pathname] ?? 'Montres';
     setMeta({
-      title: `${t} — GMBIJOUX`,
-      description: shop ? `${shop} au Maroc, boutique GMBIJOUX à Casablanca. ${SHOP_PITCH}` : undefined,
+      title: `${t} — AERO WATCH`,
+      description: shop ? `${shop} au Maroc, boutique AERO WATCH à Casablanca. ${SHOP_PITCH}` : undefined,
       path: pathname,
       noindex: PRIVATE.includes(pathname) || (!shop && !TITLES[pathname]),
     });
@@ -75,7 +75,7 @@ export default function App() {
     flushPixel();
   }, [pathname, site]);
 
-  if (pathname.startsWith(PATHS.admin)) return <Admin />;
+  if (pathname.startsWith(PATHS.admin)) return <div className="theme-light"><Admin /></div>;
   // Boutique en accès privé : rien n'est affiché avant la saisie du code.
   if (!site) return <div style={{ minHeight: '100vh', background: 'var(--ivory)' }} />;
   if (site.private && !site.unlocked) return <AccessGate onUnlock={unlocked} />;

@@ -173,7 +173,7 @@ export class ImportService {
 
       const row: ImportRow = {
         line, name, sku, priceCents, salePriceCents, stock, category: get(r, 'categorie') || 'Montres Homme',
-        collection: get(r, 'collection') || null, brand: get(r, 'marque') || 'GMBIJOUX', description: get(r, 'description').slice(0, 5000),
+        collection: get(r, 'collection') || null, brand: get(r, 'marque') || 'AERO WATCH', description: get(r, 'description').slice(0, 5000),
         movementType, color: get(r, 'couleur') || colors[0] || 'Noir', colors,
         diameterMm: diameter && diameter >= 10 && diameter < 100 ? Math.round(diameter * 10) / 10 : 40,
         waterResistanceM: water && water >= 0 && water <= 20_000 ? Math.round(water) : 30,

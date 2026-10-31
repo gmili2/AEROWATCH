@@ -9,8 +9,8 @@ import { ArrowIcon, BagIcon, HeartIcon } from './icons';
 
 /** Visuel provisoire d'une montre (cadran) — à remplacer par la photo produit. */
 export function Dial({ size = '50%', dark }: { size?: string; dark?: boolean }) {
-  const c = dark ? 'rgba(255,255,255,.16)' : 'rgba(17,17,17,.17)';
-  const c2 = dark ? 'rgba(255,255,255,.08)' : 'rgba(17,17,17,.08)';
+  const c = dark ? 'rgba(255,255,255,.16)' : 'rgba(239,232,216,.17)';
+  const c2 = dark ? 'rgba(255,255,255,.08)' : 'rgba(239,232,216,.08)';
   return (
     <div style={{ width: size, aspectRatio: '1', borderRadius: '50%', border: `1px solid ${c}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ width: '70%', aspectRatio: '1', borderRadius: '50%', border: `1px solid ${c2}` }} />
@@ -28,7 +28,7 @@ export function ProductCard({ p }: { p: Product }) {
   return (
     <article className="card" onClick={() => navigate(productPath(p.id))} style={{ display: 'flex', flexDirection: 'column', gap: 14, cursor: 'pointer', minWidth: 0 }}>
       <div ref={tilt} className="ph tilt" style={{ aspectRatio: '4/5', backgroundImage: 'none', overflow: 'hidden' }}>
-        <div className="ph zoom-hover" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: p.image ? '#f5f4f1' : 'transparent' }}>
+        <div className="ph zoom-hover" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: p.image ? 'var(--stone)' : 'transparent' }}>
           {p.image
             ? <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', transition: 'transform .6s var(--ease)' }} onMouseEnter={(e) => { (e.currentTarget.style.transform = 'scale(1.06)'); }} onMouseLeave={(e) => { (e.currentTarget.style.transform = 'scale(1)'); }} />
             : <Dial />
@@ -36,30 +36,30 @@ export function ProductCard({ p }: { p: Product }) {
         </div>
         <span className="tilt-glare" />
         {p.brand && (
-          <span style={{ position: 'absolute', top: 12, left: 12, padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(8px)', fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', color: '#111', fontWeight: 600 }}>{p.brand}</span>
+          <span style={{ position: 'absolute', top: 12, left: 12, padding: '5px 10px', borderRadius: 999, background: 'rgba(12,12,11,.8)', backdropFilter: 'blur(8px)', fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink)', fontWeight: 600 }}>{p.brand}</span>
         )}
         {badge && !p.brand && (
-          <span style={{ position: 'absolute', top: 12, left: 12, padding: '6px 10px', borderRadius: 999, background: p.old && p.inStock ? '#111' : '#fff', color: p.old && p.inStock ? '#fff' : '#111', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase' }}>{badge}</span>
+          <span style={{ position: 'absolute', top: 12, left: 12, padding: '6px 10px', borderRadius: 999, background: p.old && p.inStock ? 'var(--gold)' : 'var(--surface)', color: p.old && p.inStock ? 'var(--deep)' :  'var(--ink)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase' }}>{badge}</span>
         )}
         {badge && p.brand && (
-          <span style={{ position: 'absolute', top: 12, right: 56, padding: '6px 10px', borderRadius: 999, background: p.old ? '#111' : 'rgba(255,255,255,.9)', color: p.old ? '#fff' : '#111', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase' }}>{badge}</span>
+          <span style={{ position: 'absolute', top: 12, right: 56, padding: '6px 10px', borderRadius: 999, background: p.old ? 'var(--gold)' : 'rgba(12,12,11,.8)', color: p.old ? 'var(--deep)' :  'var(--ink)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase' }}>{badge}</span>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); toggleFav(p.id); }}
           aria-label={fav ? `Retirer ${p.name} des favoris` : `Ajouter ${p.name} aux favoris`} aria-pressed={fav}
-          style={{ position: 'absolute', top: 8, right: 8, width: 40, height: 40, borderRadius: '50%', border: 0, background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          style={{ position: 'absolute', top: 8, right: 8, width: 40, height: 40, borderRadius: '50%', border: 0, background: 'rgba(12,12,11,.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
         >
-          <HeartIcon fill={fav ? '#111' : 'none'} />
+          <HeartIcon fill={fav ? 'var(--ink)' : 'none'} />
         </button>
         {p.inStock && p.purchasable && <button
           // Avec plusieurs déclinaisons, le choix (couleur, bracelet…) se fait sur la fiche.
           onClick={(e) => { e.stopPropagation(); if (needsChoice) navigate(productPath(p.id)); else add(p.id, 1, p.variants[0]?.id); }}
           aria-label={needsChoice ? `Choisir les options de ${p.name}` : `Ajouter ${p.name} au panier`}
-          style={{ position: 'absolute', right: 10, bottom: 10, width: 44, height: 44, borderRadius: '50%', border: 0, background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform .35s' }}
+          style={{ position: 'absolute', right: 10, bottom: 10, width: 44, height: 44, borderRadius: '50%', border: 0, background: 'var(--deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'transform .35s' }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.07)')}
           onMouseLeave={(e) => (e.currentTarget.style.transform = 'none')}
         >
-          <BagIcon color="#fff" size={18} />
+          <BagIcon color="var(--cream)" size={18} />
         </button>}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -75,13 +75,13 @@ export function ProductCard({ p }: { p: Product }) {
         {p.swatches.length > 1 && (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }} aria-label={`Coloris : ${p.swatches.map((s) => s.label).join(', ')}`}>
             {p.swatches.slice(0, 5).map((s) => (
-              <span key={s.label} title={s.label} style={{ width: 12, height: 12, borderRadius: '50%', background: s.colorHex ?? '#fff', boxShadow: 'inset 0 0 0 1px rgba(17,17,17,.18)' }} />
+              <span key={s.label} title={s.label} style={{ width: 12, height: 12, borderRadius: '50%', background: s.colorHex ?? '#fff', boxShadow: 'inset 0 0 0 1px rgba(239,232,216,.18)' }} />
             ))}
             {p.swatches.length > 5 && <span style={{ fontSize: 11.5, color: 'var(--graphite)' }}>+{p.swatches.length - 5}</span>}
           </div>
         )}
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: 'var(--graphite)' }}>
-          <span style={{ color: '#111', letterSpacing: '.1em' }} aria-label={`Note ${p.rating} sur 5`}>{stars(p.rating)}</span>
+          <span style={{ color: 'var(--ink)', letterSpacing: '.1em' }} aria-label={`Note ${p.rating} sur 5`}>{stars(p.rating)}</span>
           <span>({p.reviews})</span>
         </div>
       </div>
@@ -129,7 +129,7 @@ export function CollectionsGrid() {
             ) : (
               <>
                 <div className="ph zoom-hover" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ width: '40%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.16)' }} />
+                  <div style={{ width: '40%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(239,232,216,.16)' }} />
                 </div>
                 <span className="ph-caption" style={{ left: 14, bottom: 12, fontSize: 9.5, letterSpacing: '.12em' }}>photo · {c.img}</span>
               </>
@@ -137,7 +137,7 @@ export function CollectionsGrid() {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: L.cardT, textTransform: 'uppercase', letterSpacing: '.01em', color: '#111' }}>{c.label}</span>
+              <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: L.cardT, textTransform: 'uppercase', letterSpacing: '.01em', color: 'var(--ink)' }}>{c.label}</span>
               {L.desktop && <span style={{ fontSize: 13.5, color: 'var(--graphite)' }}>{c.sub}</span>}
             </div>
             <span style={{ flex: 'none', width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--line-strong)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -161,7 +161,7 @@ export function Crumbs({ items }: { items: [string, string?][] }) {
       {items.map(([label, to], i) => (
         <span key={label} style={{ display: 'flex', gap: 10 }}>
           {i > 0 && <span>/</span>}
-          {to ? <Link to={to} style={{ color: 'var(--graphite)' }}>{label}</Link> : <span style={{ color: '#111' }}>{label}</span>}
+          {to ? <Link to={to} style={{ color: 'var(--graphite)' }}>{label}</Link> : <span style={{ color: 'var(--ink)' }}>{label}</span>}
         </span>
       ))}
     </nav>

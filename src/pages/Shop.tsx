@@ -60,7 +60,7 @@ export default function Shop() {
             <span>{items.length > PER_PAGE ? `${(page - 1) * PER_PAGE + 1}–${Math.min(page * PER_PAGE, items.length)} sur ` : ''}{items.length} modèle{items.length > 1 ? 's' : ''}</span>
             <select
               value={sort} onChange={(e) => { setSort(e.target.value as Sort); setParams({}); }} aria-label="Trier par"
-              style={{ height: 40, padding: '0 14px', border: '1px solid var(--line-strong)', borderRadius: 999, background: '#fff', color: '#111', fontSize: 13, cursor: 'pointer' }}
+              style={{ height: 40, padding: '0 14px', border: '1px solid var(--line-strong)', borderRadius: 999, background: 'var(--surface)', color: 'var(--ink)', fontSize: 13, cursor: 'pointer' }}
             >
               <option value="pop">Popularité</option>
               <option value="new">Nouveautés</option>

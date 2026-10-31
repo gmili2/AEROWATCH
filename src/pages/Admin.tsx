@@ -502,7 +502,7 @@ type ImportResult = {
 };
 const IMPORT_TEMPLATE = [
   'nom;prix;prix_barre;stock;sku;categorie;marque;mouvement;couleurs;diametre;etancheite;bracelet;genre;statut;description;images',
-  'Montre exemple acier;1290;1590;5;EX-001;Classiques;GMBIJOUX;Quartz;Noir|Bleu;40;50;Acier;Homme;Brouillon;Cadran soleil, verre minéral.;https://exemple.com/photo1.jpg | https://exemple.com/photo2.jpg',
+  'Montre exemple acier;1290;1590;5;EX-001;Classiques;AERO WATCH;Quartz;Noir|Bleu;40;50;Acier;Homme;Brouillon;Cadran soleil, verre minéral.;https://exemple.com/photo1.jpg | https://exemple.com/photo2.jpg',
 ].join('\r\n');
 function downloadTemplate() {
   // BOM : Excel lit alors correctement les accents.
@@ -525,7 +525,7 @@ function confirmMessage(o: AOrder) {
   const lines = o.lines.map((l) => `• ${l.qty} × ${l.name}${l.variant ? ` (${l.variant})` : ''}`).join('\n');
   return [
     `Bonjour ${first} 👋`,
-    `Merci pour votre commande ${o.number} sur GMBIJOUX ⌚`,
+    `Merci pour votre commande ${o.number} sur AERO WATCH ⌚`,
     '',
     lines,
     `Total : ${fmt(o.total)} — paiement à la livraison 💵`,
@@ -577,7 +577,7 @@ export default function Admin() {
   const [user, setUser] = useState<ApiUser | null | undefined>(undefined);
 
   useEffect(() => {
-    document.title = 'Administration — GMBIJOUX';
+    document.title = 'Administration — AERO WATCH';
     refreshSession().then((u) => setUser(u?.role === 'ADMIN' ? u : null));
     setLogoutHandler(() => setUser(null));
     return () => setLogoutHandler(null);
@@ -614,7 +614,7 @@ function AdminLogin({ onLogin }: { onLogin: (u: ApiUser) => void }) {
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#111', marginBottom: 6 }}>
           <img src="/logo.png" alt="" style={{ width: 44, height: 44, objectFit: 'contain' }} />
           <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, letterSpacing: '.04em' }}>GMBIJOUX</span>
+            <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, letterSpacing: '.04em' }}>AERO WATCH</span>
             <span style={{ ...monoLabel, fontSize: 9.5 }}>Administration</span>
           </span>
         </Link>
@@ -1028,10 +1028,10 @@ function AdminPanel({ user, onLogout }: { user: ApiUser; onLogout: () => void })
       {/* ---------- barre latérale ---------- */}
       <aside style={{ background: '#111', color: '#fff', display: 'flex', flexDirection: m ? 'row' : 'column', gap: m ? 16 : 36, padding: m ? '10px 16px' : '28px 18px', position: 'sticky', top: 0, height: m ? 'auto' : '100vh', zIndex: 30, overflowX: 'auto' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 'none', color: '#fff' }}>
-          <img src="/logo.png" alt="GMBIJOUX" style={{ width: 44, height: 44, objectFit: 'contain', filter: 'invert(1)', mixBlendMode: 'screen' }} />
+          <img src="/logo.png" alt="AERO WATCH" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: '50%' }} />
           {!m && (
             <span style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, letterSpacing: '.04em' }}>GMBIJOUX</span>
+              <span style={{ fontStretch: '125%', fontWeight: 600, fontSize: 14, letterSpacing: '.04em' }}>AERO WATCH</span>
               <span style={{ fontFamily: 'var(--mono)', fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: '#8C8C86' }}>Administration</span>
             </span>
           )}

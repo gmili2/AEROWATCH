@@ -1,4 +1,4 @@
-/* Client de l'API GMBIJOUX (backend/). Le jeton d'accès reste en mémoire ;
+/* Client de l'API AERO WATCH (backend/). Le jeton d'accès reste en mémoire ;
    la session est prolongée via le cookie httpOnly de rafraîchissement. */
 
 export type ApiUser = { id: string; email: string; firstName: string; lastName: string; role: 'ADMIN' | 'CUSTOMER' };

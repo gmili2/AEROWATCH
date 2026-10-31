@@ -45,7 +45,7 @@ export class OrderMail {
             <p style="margin:8px 0 0;color:#666;font-size:13px">Votre commande sera expédiée dès réception du virement.</p></div>`
         : '';
       const page = (body: string) => `<div style="font-family:Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
-        <p style="font-size:20px;letter-spacing:.2em;margin:0 0 24px">GMBIJOUX</p>${body}</div>`;
+        <p style="font-size:20px;letter-spacing:.2em;margin:0 0 24px">AERO WATCH</p>${body}</div>`;
 
       const shop = this.config.get<string>('ORDER_NOTIFY_EMAIL');
       const email = hasRealEmail(o.user.email) ? o.user.email : null;
@@ -57,7 +57,7 @@ export class OrderMail {
           to: email,
           subject: `Votre commande ${o.number} est bien reçue`,
           html: page(`<p>Bonjour ${esc(a.firstName)},</p><p>Merci pour votre commande <b>${o.number}</b>. Nous la préparons et vous contacterons pour la livraison.</p>${bank}<div style="margin-top:24px">${recap}</div>`),
-          text: `Bonjour ${a.firstName},\n\nMerci pour votre commande ${o.number} (${dh(o.totalCents)}). Nous la préparons et vous contacterons pour la livraison.\nPaiement : ${payment}${o.paymentMethod === 'BANK_TRANSFER' ? `\nRIB : ${this.config.get<string>('BANK_RIB') ?? '—'} — référence ${o.number}` : ''}\n\nGMBIJOUX`,
+          text: `Bonjour ${a.firstName},\n\nMerci pour votre commande ${o.number} (${dh(o.totalCents)}). Nous la préparons et vous contacterons pour la livraison.\nPaiement : ${payment}${o.paymentMethod === 'BANK_TRANSFER' ? `\nRIB : ${this.config.get<string>('BANK_RIB') ?? '—'} — référence ${o.number}` : ''}\n\nAERO WATCH`,
           replyTo: shop,
         }),
         shop && this.mail.send({

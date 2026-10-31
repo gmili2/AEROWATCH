@@ -25,7 +25,7 @@ const COLLECTION_TAG: Record<string, Tag> = { coffret: 'coffret', 'boite-simple'
 const CATEGORY_TAG: Record<string, Tag> = { 'montres-homme': 'homme', 'montres-femme': 'femme', automatiques: 'auto', classiques: 'classique', sport: 'sport' };
 const MOVEMENT: Record<string, string> = { AUTOMATIC: 'Automatique', MANUAL: 'Remontage manuel', QUARTZ: 'Quartz', SOLAR: 'Solaire', KINETIC: 'Kinétique' };
 const NEW_DAYS = 60;
-const HOUSE = 'GMBIJOUX';
+const HOUSE = 'AERO WATCH';
 const mm = (n: number) => String(n).replace('.', ',');
 const euros = (c: number) => c / 100;
 const swatch = ({ label, colorHex }: ApiSwatch): Swatch => ({ label, colorHex });

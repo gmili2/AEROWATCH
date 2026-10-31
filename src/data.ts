@@ -21,7 +21,7 @@ export interface Product {
   id: string; // slug, utilisé dans les URL
   sku: string;
   name: string;
-  brand?: string; // grande maison (absent pour les créations GMBIJOUX)
+  brand?: string; // grande maison (absent pour les créations AERO WATCH)
   col: string;
   kind: string;
   cats: Exclude<CategoryId, 'all'>[];
@@ -73,7 +73,7 @@ export const COLLECTIONS: { id: CategoryId; label: string; sub: string; img: str
 ];
 
 export const FAQ: [string, string][] = [
-  ['Vos montres sont-elles authentiques ?', 'Oui. Chaque montre est livrée avec son certificat d\u2019authenticité, sa carte de garantie et son écrin GMBIJOUX.'],
+  ['Vos montres sont-elles authentiques ?', 'Oui. Chaque montre est livrée avec son certificat d\u2019authenticité, sa carte de garantie et son écrin AERO WATCH.'],
   ['Quels sont les délais de livraison ?', 'Expédition sous 24 h ouvrées, livraison incluse dans le prix, en 2 à 4 jours partout au Maroc, assurée et remise en main propre.'],
   ['Puis-je retourner une montre ?', 'Vous disposez de 30 jours pour retourner une montre non portée, dans son emballage d\u2019origine. Le retour est gratuit.'],
   ['Que couvre la garantie ?', 'Deux ans contre tout défaut de fabrication du mouvement et du boîtier, hors usure normale du bracelet et chocs.'],
@@ -87,7 +87,7 @@ export const LEGAL: Record<'cgv' | 'privacy', { title: string; updated: string; 
     title: 'Conditions générales de vente',
     updated: 'Mise à jour : octobre 2026',
     sections: [
-      ['Objet', 'Les présentes conditions régissent les ventes de montres réalisées sur le site GMBIJOUX auprès de clients particuliers.'],
+      ['Objet', 'Les présentes conditions régissent les ventes de montres réalisées sur le site AERO WATCH auprès de clients particuliers.'],
       ['Prix', 'Les prix sont indiqués en dirhams marocains (DH), toutes taxes et livraison comprises, partout au Maroc.'],
       ['Commande', 'La commande est enregistrée dès sa validation sur le site ; nous vous contactons par téléphone pour la confirmer. Elle récapitule les articles, le prix et l\u2019adresse de livraison.'],
       ['Paiement', 'Le paiement s\u2019effectue à la livraison, en espèces, ou par virement bancaire avant expédition. En cas de virement, la commande est expédiée dès réception des fonds.'],
@@ -105,7 +105,7 @@ export const LEGAL: Record<'cgv' | 'privacy', { title: string; updated: string; 
       ['Conservation', 'Les données sont conservées pendant la durée de la relation commerciale, puis archivées selon les obligations légales.'],
       ['Vos droits', 'Vous disposez d\u2019un droit d\u2019accès, de rectification, d\u2019effacement et d\u2019opposition, exerçable à tout moment auprès de notre service client.'],
       ['Cookies', 'Des cookies techniques assurent le fonctionnement du site ; les cookies de mesure d\u2019audience ne sont déposés qu\u2019avec votre consentement.'],
-      ['Contact', 'Pour toute question relative à vos données : contact@gmbijoux.fr.'],
+      ['Contact', 'Pour toute question relative à vos données : contact@aerowatch.store.'],
     ],
   },
 };

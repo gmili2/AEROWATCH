@@ -242,7 +242,7 @@ function dialTexture() {
   g.fillStyle = '#f2f2ee';
   g.textAlign = 'center';
   g.font = '600 50px Archivo, Helvetica, Arial, sans-serif';
-  spaced(g, 'GMBIJOUX', 0, -150, 10);
+  spaced(g, 'AERO WATCH', 0, -150, 10);
   g.fillStyle = 'rgba(242,242,238,.6)';
   g.font = '400 24px "IBM Plex Mono", monospace';
   spaced(g, 'AUTOMATIC', 0, 175, 6);

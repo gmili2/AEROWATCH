@@ -55,7 +55,7 @@ export default function Product() {
     if (!p) return;
     const text = `${p.kind ? p.kind + '. ' : ''}${p.desc}`.replace(/\s+/g, ' ');
     setMeta({
-      title: `${p.name} — ${fmt(p.price)} — GMBIJOUX`,
+      title: `${p.name} — ${fmt(p.price)} — AERO WATCH`,
       description: `${p.name} à ${fmt(p.price)}${p.hasRange ? ' et plus' : ''}. ${text} ${SHOP_PITCH}`.slice(0, 300),
       path: productPath(p.id),
     });
@@ -165,9 +165,9 @@ export default function Product() {
         <div style={{ display: 'grid', gridTemplateColumns: L.split, gap: L.pGap, marginTop: 24, alignItems: 'start' }}>
           <div data-reveal style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {mainVideo ? (
-              <div className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', background: '#111', overflow: 'hidden' }}>
+              <div className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', background: 'var(--deep)', overflow: 'hidden' }}>
                 <video key={mainVideo} src={mainVideo} controls autoPlay muted loop playsInline preload="metadata"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', background: '#111' }} />
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', background: 'var(--deep)' }} />
               </div>
             ) : (
             <div
@@ -176,18 +176,18 @@ export default function Product() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setZoom((z) => !z); } }}
               onMouseMove={(e) => zoom && setZxy(pos(e))}
               onMouseLeave={() => zoom && setZoom(false)}
-              className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', cursor: zoom ? 'zoom-out' : 'zoom-in', background: mainPhoto ? '#f5f4f1' : 'transparent' }}
+              className="ph" style={{ aspectRatio: '1', backgroundImage: 'none', cursor: zoom ? 'zoom-out' : 'zoom-in', background: mainPhoto ? 'var(--stone)' : 'transparent' }}
             >
               <div className="ph" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: zoom ? 'scale(2.2)' : 'scale(1)', transformOrigin: `${zxy.x}% ${zxy.y}%`, transition: 'transform .6s var(--ease)' }}>
                 {mainPhoto
                   ? <img src={mainPhoto} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
-                  : <div style={{ width: '54%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: '72%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(17,17,17,.1)' }} />
+                  : <div style={{ width: '54%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(239,232,216,.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: '72%', aspectRatio: '1', borderRadius: '50%', border: '1px solid rgba(239,232,216,.1)' }} />
                     </div>
                 }
               </div>
               <span className="ph-caption">photo · {p.name}{variant ? ' ' + variant.values.map((v) => v.label).join(' · ') : ''} — {photos.length ? `${shown + 1} / ${gallery.length}` : VIEWS[Math.max(0, img)]}</span>
-              <span style={{ position: 'absolute', right: 14, top: 14, padding: '7px 12px', borderRadius: 999, background: 'rgba(255,255,255,.9)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase' }}>
+              <span style={{ position: 'absolute', right: 14, top: 14, padding: '7px 12px', borderRadius: 999, background: 'rgba(12,12,11,.8)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase' }}>
                 {zoom ? 'Zoom × 2,2' : 'Cliquer pour zoomer'}
               </span>
             </div>
@@ -197,13 +197,13 @@ export default function Product() {
               <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(gallery.length, 6)},minmax(0,1fr))`, gap: 10 }}>
                 {gallery.map(({ src, video }, i) => (
                   <button key={src} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={video ? `Vidéo ${i - photos.length + 1}` : `Photo ${i + 1}`} aria-pressed={i === shown}
-                    style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: 'none', background: video ? '#111' : '#f5f4f1', border: `1px solid ${i === shown ? '#111' : 'transparent'}`, overflow: 'hidden', position: 'relative' }}>
+                    style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: 'none', background: video ? 'var(--deep)' : 'var(--stone)', border: `1px solid ${i === shown ? 'var(--ink)' : 'transparent'}`, overflow: 'hidden', position: 'relative' }}>
                     {video
                       ? <>
                           {/* #t=0.1 : première image de la vidéo comme vignette. */}
                           <video src={`${src}#t=0.1`} muted playsInline preload="metadata" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                          <span aria-hidden style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,.92)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <span style={{ width: 0, height: 0, borderTop: '6px solid transparent', borderBottom: '6px solid transparent', borderLeft: '10px solid #111', marginLeft: 3 }} />
+                          <span aria-hidden style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 30, height: 30, borderRadius: '50%', background: 'rgba(12,12,11,.8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span style={{ width: 0, height: 0, borderTop: '6px solid transparent', borderBottom: '6px solid transparent', borderLeft: '10px solid var(--ink)', marginLeft: 3 }} />
                           </span>
                         </>
                       : <img src={src} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
@@ -215,7 +215,7 @@ export default function Product() {
               {VIEWS.map((v, i) => (
                 <button
                   key={v} className="ph" onClick={() => { setImg(i); setZoom(false); }} aria-label={`Vue ${v}`} aria-pressed={i === shown}
-                  style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: p.image ? 'none' : 'repeating-linear-gradient(135deg,rgba(17,17,17,.045) 0 1px,transparent 1px 9px)', background: p.image && i === 0 ? '#f5f4f1' : undefined, border: `1px solid ${i === shown ? '#111' : 'transparent'}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', overflow: 'hidden', position: 'relative' }}
+                  style={{ aspectRatio: '1', padding: 0, cursor: 'pointer', backgroundImage: p.image ? 'none' : 'repeating-linear-gradient(135deg,rgba(239,232,216,.045) 0 1px,transparent 1px 9px)', background: p.image && i === 0 ? 'var(--stone)' : undefined, border: `1px solid ${i === shown ? 'var(--ink)' : 'transparent'}`, display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', overflow: 'hidden', position: 'relative' }}
                 >
                   {p.image && i === 0 && <img src={p.image} alt={v} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />}
                   <span style={{ position: 'relative', zIndex: 1, padding: 8, fontFamily: 'var(--mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: p.image ? 'rgba(17,17,17,.7)' : 'var(--graphite)', textAlign: 'left' }}>{v}</span>
@@ -237,20 +237,20 @@ export default function Product() {
               {old && (
                 <>
                   <span style={{ fontSize: 16, color: 'var(--graphite)', textDecoration: 'line-through' }}>{fmt(old)}</span>
-                  <span style={{ padding: '5px 10px', borderRadius: 999, background: '#111', color: '#fff', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.08em' }}>{pct(price, old)}</span>
+                  <span style={{ padding: '5px 10px', borderRadius: 999, background: 'var(--deep)', color: 'var(--cream)', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.08em' }}>{pct(price, old)}</span>
                 </>
               )}
               <span style={{ flexBasis: '100%', fontSize: 12.5, color: 'var(--graphite)' }}>TTC · paiement à la livraison ou par virement</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: canBuy ? '#111' : 'var(--faint)', boxShadow: '0 0 0 4px var(--line)' }} />{stockText}
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: canBuy ? 'var(--ink)' : 'var(--faint)', boxShadow: '0 0 0 4px var(--line)' }} />{stockText}
             </div>
             <p style={{ margin: 0, fontSize: 15.5, lineHeight: 1.7, color: 'var(--body)', textWrap: 'pretty' }}>{p.desc}</p>
             {(p.options ?? []).map((o) => {
               const isColor = o.values.some((v) => v.colorHex);
               return (
                 <div key={o.name} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, ...label, color: '#111' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, ...label, color: 'var(--ink)' }}>
                     <span style={{ color: 'var(--graphite)' }}>{o.name}</span><span style={{ textAlign: 'right' }}>{sel[o.name]}</span>
                   </div>
                   <div role="radiogroup" aria-label={o.name} style={{ display: 'flex', flexWrap: 'wrap', gap: isColor ? 12 : 8 }}>
@@ -260,8 +260,8 @@ export default function Product() {
                       const title = v.label + (ok ? '' : ' — épuisé');
                       return isColor ? (
                         <button key={v.label} role="radio" aria-checked={on} aria-label={title} title={title} onClick={() => choose(o.name, v.label)}
-                          style={{ position: 'relative', width: 40, height: 40, borderRadius: '50%', padding: 0, cursor: 'pointer', background: v.colorHex ?? '#fff', border: 0, boxShadow: on ? '0 0 0 2px var(--ivory), 0 0 0 3px #111' : 'inset 0 0 0 1px rgba(17,17,17,.18)', opacity: ok ? 1 : 0.45, transition: 'box-shadow .25s' }}>
-                          {!ok && <span aria-hidden style={{ position: 'absolute', left: '50%', top: 4, bottom: 4, width: 1, background: '#111', transform: 'rotate(45deg)' }} />}
+                          style={{ position: 'relative', width: 40, height: 40, borderRadius: '50%', padding: 0, cursor: 'pointer', background: v.colorHex ?? '#fff', border: 0, boxShadow: on ? '0 0 0 2px var(--ivory), 0 0 0 3px var(--ink)' : 'inset 0 0 0 1px rgba(239,232,216,.18)', opacity: ok ? 1 : 0.45, transition: 'box-shadow .25s' }}>
+                          {!ok && <span aria-hidden style={{ position: 'absolute', left: '50%', top: 4, bottom: 4, width: 1, background: 'var(--deep)', transform: 'rotate(45deg)' }} />}
                         </button>
                       ) : (
                         <button key={v.label} role="radio" aria-checked={on} title={title} className={`chip${on ? ' active' : ''}`} onClick={() => choose(o.name, v.label)}
@@ -281,8 +281,8 @@ export default function Product() {
                     const on = pack === n;
                     return (
                       <button key={n} role="radio" aria-checked={on} onClick={() => setPack(n)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', background: on ? '#fff' : 'transparent', border: `1.5px solid ${on ? '#111' : 'var(--line-strong)'}`, transition: 'border-color .2s' }}>
-                        <span aria-hidden style={{ width: 18, height: 18, borderRadius: '50%', flex: 'none', border: `1.5px solid ${on ? '#111' : 'var(--line-strong)'}`, boxShadow: on ? 'inset 0 0 0 4px #fff' : 'none', background: on ? '#111' : 'transparent' }} />
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', borderRadius: 14, cursor: 'pointer', textAlign: 'left', background: on ? 'var(--deep)' :  'transparent', border: `1.5px solid ${on ? 'var(--ink)' : 'var(--line-strong)'}`, transition: 'border-color .2s' }}>
+                        <span aria-hidden style={{ width: 18, height: 18, borderRadius: '50%', flex: 'none', border: `1.5px solid ${on ? 'var(--ink)' : 'var(--line-strong)'}`, boxShadow: on ? 'inset 0 0 0 4px var(--surface)' : 'none', background: on ? 'var(--ink)' : 'transparent' }} />
                         <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                           <span style={{ fontSize: 15, fontWeight: 600 }}>{n === 1 ? '1 montre' : `${n} montres`}</span>
                           {total < sum && <span style={{ fontSize: 12.5, color: 'var(--graphite)' }}>Économisez {fmt(sum - total)}</span>}
@@ -296,7 +296,7 @@ export default function Product() {
                   })}
                 </div>
                 {pack > 1 && p.variants.length > 1 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', background: '#fff', border: '1px solid var(--line)', borderRadius: 14 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 14 }}>
                     <span style={{ ...label, color: 'var(--graphite)' }}>Couleur de chaque montre</span>
                     {unitVariants(pack).map((uv, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -312,7 +312,7 @@ export default function Product() {
                               const pick = () => setExtra((xs) => { const next = [...xs]; next[i - 1] = v.id; return next; });
                               return hex ? (
                                 <button key={v.id} role="radio" aria-checked={on} aria-label={name} title={name} onClick={pick}
-                                  style={{ width: 32, height: 32, borderRadius: '50%', padding: 0, cursor: 'pointer', background: hex, border: 0, boxShadow: on ? '0 0 0 2px var(--ivory), 0 0 0 3px #111' : 'inset 0 0 0 1px rgba(17,17,17,.18)' }} />
+                                  style={{ width: 32, height: 32, borderRadius: '50%', padding: 0, cursor: 'pointer', background: hex, border: 0, boxShadow: on ? '0 0 0 2px var(--ivory), 0 0 0 3px var(--ink)' : 'inset 0 0 0 1px rgba(239,232,216,.18)' }} />
                               ) : (
                                 <button key={v.id} role="radio" aria-checked={on} className={`chip${on ? ' active' : ''}`} onClick={pick} style={{ height: 36, padding: '0 14px', fontSize: 12.5 }}>{name}</button>
                               );
@@ -396,7 +396,7 @@ export default function Product() {
 
       {L.mobile && (
         // Barre d'achat mobile : prix et coloris, ajout au panier (icône) et achat direct vers le formulaire de commande.
-        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(247,247,245,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 45, background: 'rgba(12,12,11,.96)', backdropFilter: 'blur(12px)', borderTop: '1px solid var(--line)', padding: '10px 16px calc(10px + env(safe-area-inset-bottom))', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0, flex: 'none', maxWidth: '34%' }}>
             <span style={{ fontSize: 16, fontWeight: 600, whiteSpace: 'nowrap' }}>{fmt(packTotal)}</span>
             {packTotal < packSum

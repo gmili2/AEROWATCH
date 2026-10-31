@@ -69,9 +69,9 @@ export type CatalogProduct = { id: string; name: string; sku: string; unit: numb
 /** Marque maison, catégories et livraison : créées seulement si elles n'existent pas. */
 export async function installReferenceData(prisma: PrismaClient) {
   const brands: Record<string, string> = {};
-  const house = await prisma.brand.findUnique({ where: { slug: 'gmbijoux' } })
-    ?? await prisma.brand.create({ data: { name: 'GMBIJOUX', slug: 'gmbijoux', description: 'Maison horlogère française.' } });
-  brands.GMBIJOUX = house.id;
+  const house = await prisma.brand.findUnique({ where: { slug: 'aero-watch' } })
+    ?? await prisma.brand.create({ data: { name: 'AERO WATCH', slug: 'aero-watch', description: 'Maison horlogère au Maroc.' } });
+  brands['AERO WATCH'] = house.id;
 
   const cats: Record<string, string> = {};
   for (const [i, [slug, name, description, imageUrl]] of CATEGORIES.entries()) {
