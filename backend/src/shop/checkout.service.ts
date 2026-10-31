@@ -260,7 +260,7 @@ export class CheckoutService {
   /** Numéro lisible GM-XXXXXX, unique. */
   private async newNumber(tx: Prisma.TransactionClient) {
     for (let i = 0; i < 10; i++) {
-      const number = `GM-${randomInt(100000, 1000000)}`;
+      const number = `AW-${randomInt(100000, 1000000)}`;
       if (!(await tx.order.findUnique({ where: { number }, select: { id: true } }))) return number;
     }
     throw new Error('Impossible de générer un numéro de commande');

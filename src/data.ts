@@ -120,7 +120,7 @@ export const PILLARS = [
 export const fmt = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' DH';
 export const stars = (r: number) => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r));
 export const ratingF = (r: number) => r.toFixed(1).replace('.', ',');
-export const refOf = (p: Product) => 'GM-' + p.id.slice(0, 3).toUpperCase() + '-' + (p.dims.match(/\d+/) || [''])[0];
+export const refOf = (p: Product) => 'AW-' + p.id.slice(0, 3).toUpperCase() + '-' + (p.dims.match(/\d+/) || [''])[0];
 export const isNew = (p: Product) => p.cats.includes('new');
 export const badgeOf = (p: Product) =>
   p.old ? '−' + Math.round((1 - p.price / p.old) * 100) + ' %' : isNew(p) ? 'Nouveau' : '';
