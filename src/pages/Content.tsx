@@ -39,7 +39,7 @@ export function About() {
 
 const CONTACT_INFO = [
   { k: 'Service client', v: 'Du lundi au samedi, 9 h – 19 h' },
-  { k: 'E-mail', v: 'contact@aerowatch.store' },
+  { k: 'E-mail', v: 'contact@aerowatch.mygympro.club' },
   { k: 'Réponse', v: 'Sous 24 h ouvrées' },
 ];
 

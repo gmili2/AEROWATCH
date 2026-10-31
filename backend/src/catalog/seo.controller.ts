@@ -52,7 +52,7 @@ export class SeoController {
   constructor(private prisma: PrismaService, private pricing: PricingService, private access: SiteAccess, private config: ConfigService) {}
 
   private get origin() {
-    return (this.config.get<string[]>('FRONTEND_URL') ?? [])[0]?.replace(/\/$/, '') || 'https://aerowatch.store';
+    return (this.config.get<string[]>('FRONTEND_URL') ?? [])[0]?.replace(/\/$/, '') || 'https://aerowatch.mygympro.club';
   }
   private abs(url: string) {
     // Photos de l'admin : adresse servie directement par le serveur web (voir src/catalog.tsx du site).

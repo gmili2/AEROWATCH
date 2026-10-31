@@ -105,7 +105,7 @@ export const LEGAL: Record<'cgv' | 'privacy', { title: string; updated: string; 
       ['Conservation', 'Les données sont conservées pendant la durée de la relation commerciale, puis archivées selon les obligations légales.'],
       ['Vos droits', 'Vous disposez d\u2019un droit d\u2019accès, de rectification, d\u2019effacement et d\u2019opposition, exerçable à tout moment auprès de notre service client.'],
       ['Cookies', 'Des cookies techniques assurent le fonctionnement du site ; les cookies de mesure d\u2019audience ne sont déposés qu\u2019avec votre consentement.'],
-      ['Contact', 'Pour toute question relative à vos données : contact@aerowatch.store.'],
+      ['Contact', 'Pour toute question relative à vos données : contact@aerowatch.mygympro.club.'],
     ],
   },
 };

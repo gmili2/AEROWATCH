@@ -3,7 +3,7 @@
  * L'API envoie déjà ces balises pour les pages montres (backend/src/catalog/seo.controller.ts) ;
  * on les tient à jour ici quand la navigation se fait sans recharger la page.
  */
-const ORIGIN = 'https://aerowatch.store';
+const ORIGIN = 'https://aerowatch.mygympro.club';
 export const SHOP_PITCH = 'Livraison gratuite partout au Maroc, paiement à la livraison.';
 export const HOME_TITLE = 'AERO WATCH — Montres homme et femme à Casablanca · Livraison gratuite au Maroc';
 export const HOME_DESCRIPTION = `Boutique de montres à Casablanca : montres homme et femme, automatiques, classiques et sport. ${SHOP_PITCH}`;

@@ -6,9 +6,6 @@ Options -Indexes
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
-  # Adresse unique sans www (à adapter au domaine définitif).
-  RewriteCond %{HTTP_HOST} ^www\.aerowatch\.store$ [NC]
-  RewriteRule ^ https://aerowatch.store%{REQUEST_URI} [L,R=301]
   RewriteCond %{HTTPS} off
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
