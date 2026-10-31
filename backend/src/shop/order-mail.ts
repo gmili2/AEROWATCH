@@ -62,7 +62,7 @@ export class OrderMail {
         }),
         shop && this.mail.send({
           to: shop.split(',').map((s) => s.trim()).filter(Boolean),
-          subject: `Nouvelle commande ${o.number} — ${dh(o.totalCents)}`,
+          subject: `AERO WATCH · Nouvelle commande ${o.number} — ${dh(o.totalCents)}`,
           html: page(`<p>Nouvelle commande <b>${o.number}</b> de ${esc(name)} (${esc(contact)}).</p>${o.customerNote ? `<p style="color:#444"><b>Note du client :</b> ${esc(o.customerNote)}</p>` : ''}${recap}`),
           text: `Nouvelle commande ${o.number} de ${name} (${contact}) : ${dh(o.totalCents)}, ${payment}.`,
           replyTo: email ?? undefined,
