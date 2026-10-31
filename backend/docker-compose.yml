@@ -4,13 +4,13 @@ services:
     image: mariadb:11.4
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: gmbijoux
-      MARIADB_USER: gmbijoux
-      MARIADB_PASSWORD: gmbijoux
-      MARIADB_ROOT_PASSWORD: gmbijoux-root
+      MARIADB_DATABASE: aerowatch
+      MARIADB_USER: aerowatch
+      MARIADB_PASSWORD: aerowatch
+      MARIADB_ROOT_PASSWORD: aerowatch-root
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - mariadb:/var/lib/mysql
 volumes:
