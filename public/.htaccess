@@ -6,6 +6,12 @@ Options -Indexes
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
+  # Le site est servi sur aerowatch.store par un Worker Cloudflare qui vient chercher les pages ici
+  # (en-tête X-AW-Proxy) ; les visiteurs arrivés directement sur l'ancienne adresse y sont renvoyés.
+  RewriteCond %{HTTP_HOST} ^aerowatch\.mygympro\.club$ [NC]
+  RewriteCond %{HTTP:X-AW-Proxy} !=1
+  RewriteRule ^ https://aerowatch.store%{REQUEST_URI} [L,R=301]
+
   RewriteCond %{HTTPS} off
   RewriteCond %{HTTP:X-Forwarded-Proto} !https
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
